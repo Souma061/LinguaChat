@@ -10,14 +10,23 @@
 
     <div class="shell">
       <aside id="login">
-        <h2>Rooms</h2>
-        <input id="username" placeholder="Your name" />
-        <input id="room" placeholder="Room (e.g. demo)" />
-        <button id="joinButton">Join</button>
-        <p class="hint">
-          Share the room link with teammates or join room <strong>demo</strong>
-          to test.
-        </p>
+        <h2>LinguaChat</h2>
+
+        <div>
+          <label for="username" class="input-label">Username:</label>
+          <input id="username" type="text" placeholder="Enter your name" />
+        </div>
+
+        <div>
+          <label for="room" class="input-label">Room:</label>
+          <input id="room" type="text" placeholder="Enter room name" />
+        </div>
+
+        <button id="joinButton">Join Room</button>
+        <button id="demoButton">🎬 Quick Demo</button>
+
+        <p class="hint">or join a demo room instantly</p>
+
         <div id="roomUsers" class="presence"></div>
         <p id="shareLink" class="hint" hidden></p>
       </aside>

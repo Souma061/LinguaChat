@@ -4,6 +4,7 @@ const roomInput = document.getElementById('room');
 const login = document.getElementById('login');
 const chat = document.getElementById('chat');
 const joinButton = document.getElementById('joinButton');
+const demoButton = document.getElementById('demoButton');
 const sendButton = document.getElementById('sendButton');
 const messageInput = document.getElementById('message');
 const messagesDiv = document.getElementById('messages');
@@ -17,6 +18,28 @@ const statusText = document.getElementById('status');
 let username = '';
 let room = '';
 let sourceLang = 'auto';
+
+// Demo configuration
+const DEMO_ROOM = 'Demo-Room';
+const DEMO_MESSAGES = [
+  {
+    author: 'Adam',
+    message: 'Hello everyone! Welcome to LinguaChat 👋',
+    lang: 'en',
+  },
+  { author: 'Ram', message: 'नमस्ते! यह बहुत बढ़िया है 😊', lang: 'hi' },
+  {
+    author: 'Christopher',
+    message: '¡Hola! ¿Cómo estás? Esto es increíble',
+    lang: 'es',
+  },
+  { author: 'Sophie', message: "Bonjour! C'est magnifique, non?", lang: 'fr' },
+  {
+    author: 'Souma',
+    message: 'আমরা সবাই বিভিন্ন ভাষায় কথা বলছি!',
+    lang: 'bn',
+  },
+];
 
 const params = new URLSearchParams(window.location.search);
 const presetRoom = params.get('room');
@@ -91,36 +114,90 @@ const sendMessage = () => {
   const msg = messageInput.value;
 
   if (msg.trim() !== '') {
+    const msgId = `${username}-${Date.now()}`; // ✅ Generate matching ID
+    const time = new Date().toLocaleTimeString();
     const data = {
       room,
       author: username,
       message: msg,
-      time: new Date().toLocaleTimeString(),
+      time: time,
       targetLang: langSelect.value,
       sourceLang,
     };
 
-    socket.emit('send_message', data);
+    // ✅ Show message immediately (optimistic UI)
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble me new';
+    bubble.id = `msg-${msgId}`; // ✅ Use msgId
+
+    const meta = document.createElement('div');
+    meta.className = 'meta';
+
+    const authorEl = document.createElement('span');
+    authorEl.textContent = username;
+
+    const langBadgeEl = document.createElement('span');
+    langBadgeEl.className = 'lang-badge';
+    langBadgeEl.textContent = langSelect.value.toUpperCase();
+
+    const timeEl = document.createElement('span');
+    timeEl.className = 'time';
+    timeEl.textContent = time;
+
+    const statusEl = document.createElement('span');
+    statusEl.className = 'send-status';
+    statusEl.textContent = '⏳';
+
+    meta.append(authorEl, langBadgeEl, timeEl, statusEl);
+
+    const textEl = document.createElement('div');
+    textEl.className = 'text';
+    textEl.textContent = msg;
+
+    bubble.append(meta, textEl);
+    messagesDiv.appendChild(bubble);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
     messageInput.value = '';
     setStatus('');
+
+    socket.emit('send_message', data);
   }
 };
 
 const appendMessage = (data) => {
   const bubble = document.createElement('div');
-  bubble.className = 'bubble';
+  bubble.className = 'bubble new';
   if (data.author === username) {
     bubble.classList.add('me');
   }
 
+  // ✅ Add msgId if available (for tracking)
+  if (data.msgId) {
+    bubble.id = `msg-${data.msgId}`;
+  }
+
   const meta = document.createElement('div');
   meta.className = 'meta';
+
   const authorEl = document.createElement('span');
   authorEl.textContent = data.author;
+
+  // ✅ Add language badge if available
+  let langBadgeEl = null;
+  if (data.lang) {
+    langBadgeEl = document.createElement('span');
+    langBadgeEl.className = 'lang-badge';
+    langBadgeEl.textContent = data.lang.toUpperCase();
+  }
+
   const timeEl = document.createElement('span');
   timeEl.className = 'time';
   timeEl.textContent = data.time;
-  meta.append(authorEl, timeEl);
+
+  meta.append(authorEl);
+  if (langBadgeEl) meta.append(langBadgeEl);
+  meta.append(timeEl);
 
   const textEl = document.createElement('div');
   textEl.className = 'text';
@@ -132,7 +209,30 @@ const appendMessage = (data) => {
   setStatus('');
 };
 
-socket.on('receive_message', appendMessage);
+socket.on('receive_message', (data) => {
+  console.log('Received message:', data); // ✅ Debug log
+
+  // ✅ If this is OUR message AND it has msgId, DELETE the optimistic one
+  if (data.author === username && data.msgId) {
+    console.log('Checking for msgId:', `msg-${data.msgId}`); // ✅ Debug log
+    const sentMsg = messagesDiv.querySelector(`#msg-${data.msgId}`);
+
+    if (sentMsg) {
+      console.log('Found message to delete'); // ✅ Debug log
+      // ✅ DELETE the temporary optimistic message
+      sentMsg.remove();
+
+      // ✅ Show the confirmed message from server
+      appendMessage(data);
+      return; // ✅ EXIT - don't duplicate
+    } else {
+      console.log('Message ID not found'); // ✅ Debug log
+    }
+  }
+
+  // ✅ For OTHER users' messages
+  appendMessage(data);
+});
 
 socket.on('room_history', (history) => {
   history.forEach((entry) => appendMessage(entry));
@@ -193,6 +293,52 @@ langSelect.addEventListener('change', () => {
 messageInput.addEventListener('input', () => {
   sourceLang = detectSourceLanguage(messageInput.value);
 });
+
+// Demo Mode
+const startDemo = () => {
+  usernameInput.value = `Visitor_${Math.floor(Math.random() * 10000)}`;
+  roomInput.value = DEMO_ROOM;
+  langSelect.value = 'en';
+  joinRoom();
+
+  // Auto-load demo messages with staggered timing
+  setTimeout(() => {
+    DEMO_MESSAGES.forEach((msg, index) => {
+      setTimeout(() => {
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble new';
+        if (msg.author === usernameInput.value) {
+          bubble.classList.add('me');
+        }
+
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        const langBadgeEl = document.createElement('span');
+        langBadgeEl.className = 'lang-badge';
+        langBadgeEl.textContent = msg.lang.toUpperCase();
+
+        const authorEl = document.createElement('span');
+        authorEl.textContent = msg.author;
+
+        const timeEl = document.createElement('span');
+        timeEl.className = 'time';
+        timeEl.textContent = new Date().toLocaleTimeString();
+
+        meta.append(authorEl, langBadgeEl, timeEl);
+
+        const textEl = document.createElement('div');
+        textEl.className = 'text';
+        textEl.textContent = msg.message;
+
+        bubble.append(meta, textEl);
+        messagesDiv.appendChild(bubble);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      }, index * 900); // Stagger messages by 900ms
+    });
+  }, 1200);
+};
+
+demoButton.addEventListener('click', startDemo);
 
 socket.on('connect', () => {
   if (room) {

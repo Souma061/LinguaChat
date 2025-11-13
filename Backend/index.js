@@ -47,7 +47,7 @@ const lingo = process.env.LINGO_API_KEY
   : null;
 
 const rooms = new Map();
-const messageHistory = new Map();
+const messageHistory = new Map(); // Maps room -> [{ author, original, translations: {}, time, sourceLocale }]
 const HISTORY_LIMIT = 50;
 
 const roomMembers = (room) =>
@@ -155,69 +155,59 @@ io.on('connection', (socket) => {
 
   socket.on('send_message', async (data) => {
     data.sourceLang = data.sourceLang || 'auto';
-    const members = roomMembers(data.room);
-    if (!members.length) {
-      return;
-    }
-
-    const translationCache = new Map();
     const sourceLocale = toLocale(data.sourceLang) ?? null;
+    const room = data.room;
+    const msgId = `${data.author}-${Date.now()}`; // ✅ Generate unique message ID
 
-    const translateFor = (lang) => {
-      if (translationCache.has(lang)) {
-        return translationCache.get(lang);
-      }
+    const roomSockets = io.sockets.adapter.rooms.get(room);
+    if (!roomSockets) return;
 
-      const job = translateText(data.message, sourceLocale, lang);
-      translationCache.set(lang, job);
-      return job;
-    };
-
-    const deliveries = await Promise.all(
-      members.map(async (member) => {
-        const result = await translateFor(member.lang);
-
-        if (result.error) {
-          io.to(member.id).emit(
-            'translation_error',
-            `Translation unavailable for ${result.targetLocale}. Showing original message.`
-          );
-        }
-
-        return {
-          id: member.id,
-          lang: member.lang,
-          payload: {
-            author: data.author,
-            message: result.text,
-            time: data.time,
-          },
-        };
-      })
-    );
-
-    for (const delivery of deliveries) {
-      io.to(delivery.id).emit('receive_message', delivery.payload);
-    }
-
-    const historyEntry = {
+    // Store original message in history FIRST
+    const history = messageHistory.get(room) || [];
+    history.push({
       author: data.author,
       original: data.message,
-      time: data.time,
-      sourceLocale,
       translations: {},
-    };
-
-    deliveries.forEach((delivery) => {
-      historyEntry.translations[delivery.lang] = delivery.payload.message;
+      time: data.time,
+      sourceLocale: sourceLocale,
+      msgId: msgId,
     });
+    if (history.length > HISTORY_LIMIT) history.shift();
+    messageHistory.set(room, history);
 
-    const history = messageHistory.get(data.room) ?? [];
-    history.push(historyEntry);
-    if (history.length > HISTORY_LIMIT) {
-      history.shift();
+    // ✅ Translate and send to EACH recipient (including sender)
+    for (const recipientId of roomSockets) {
+      const recipientLang = rooms.get(recipientId)?.lang || 'en';
+      const targetLocale = toLocale(recipientLang);
+
+      let translatedMessage = data.message;
+
+      if (lingo && targetLocale && targetLocale !== sourceLocale) {
+        try {
+          translatedMessage =
+            (await lingo.localizeText(data.message, {
+              sourceLocale,
+              targetLocale,
+              fast: true,
+            })) || data.message;
+        } catch (err) {
+          console.error('Lingo.dev translation failed:', err);
+          io.to(recipientId).emit(
+            'translation_error',
+            'Translation unavailable; showing original text.'
+          );
+        }
+      }
+
+      // ✅ Send to THIS recipient (including the sender)
+      io.to(recipientId).emit('receive_message', {
+        author: data.author,
+        message: translatedMessage,
+        time: data.time,
+        msgId: msgId, // ✅ msgId for deduplication
+        lang: data.targetLang || 'en',
+      });
     }
-    messageHistory.set(data.room, history);
   });
 });
 

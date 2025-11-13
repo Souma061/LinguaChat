@@ -186,7 +186,7 @@ body {
 }
 
 .composer input {
-  flex: 1;
+  flex: 1 ;
   background: rgba(30, 41, 59, 0.75);
   color: #f8fafc;
   border-radius: 18px;

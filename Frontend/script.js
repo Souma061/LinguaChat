@@ -138,6 +138,9 @@ socket.on('room_history', (history) => {
   history.forEach((entry) => appendMessage(entry));
   if (history.length) {
     setStatus(`Loaded ${history.length} earlier messages.`, 'info');
+    setTimeout(() => {
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }, 100);
   }
 });
 

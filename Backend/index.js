@@ -15,8 +15,7 @@ const __dirname = path.dirname(__filename);
 export const app = express();
 app.use(cors());
 
-const FRONTEND_DIR = path.join(process.cwd(), 'Frontend');
-app.use(express.static(FRONTEND_DIR));
+app.use(express.static(path.join(__dirname, '../Frontend')));
 
 app.get('/health', (_, res) => {
   res.json({ status: 'ok' });

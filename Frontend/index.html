@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>LinguaChat</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <p id="status" class="hint status-banner">Connecting…</p>
+
+    <div class="shell">
+      <aside id="login">
+        <h2>Rooms</h2>
+        <input id="username" placeholder="Your name" />
+        <input id="room" placeholder="Room (e.g. demo)" />
+        <button id="joinButton">Join</button>
+        <p class="hint">
+          Share the room link with teammates or join room <strong>demo</strong>
+          to test.
+        </p>
+        <div id="roomUsers" class="presence"></div>
+        <p id="shareLink" class="hint" hidden></p>
+      </aside>
+
+      <main id="chat" style="display: none">
+        <header class="chat-header">
+          <div>
+            <h2>LinguaChat 💬</h2>
+            <p id="roomInfo"></p>
+            <p id="shareLinkHeader" class="hint" hidden></p>
+            <p class="powered">
+              Powered by
+              <a href="https://lingo.dev" target="_blank" rel="noopener"
+                >Lingo.dev</a
+              >
+            </p>
+          </div>
+          <select id="language">
+            <option value="en">English</option>
+            <option value="hi">Hindi</option>
+            <option value="bn">Bengali</option>
+            <option value="es">Spanish</option>
+            <option value="fr">French</option>
+          </select>
+        </header>
+
+        <div id="messages" class="messages"></div>
+
+        <div class="composer">
+          <input id="message" placeholder="Type a message..." disabled />
+          <button id="sendButton" disabled>Send</button>
+        </div>
+      </main>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="module" src="script.js"></script>
+  </body>
+</html>

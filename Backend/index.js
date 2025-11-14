@@ -157,12 +157,12 @@ io.on('connection', (socket) => {
     data.sourceLang = data.sourceLang || 'auto';
     const sourceLocale = toLocale(data.sourceLang) ?? null;
     const room = data.room;
-    const msgId = `${data.author}-${Date.now()}`; // ✅ Generate unique message ID
+    const msgId = data.msgId || `${data.author}-${Date.now()}`; // ✅ Use frontend msgId if available
 
     const roomSockets = io.sockets.adapter.rooms.get(room);
     if (!roomSockets) return;
 
-    // Store original message in history FIRST
+    // Store original message in history
     const history = messageHistory.get(room) || [];
     history.push({
       author: data.author,
@@ -175,7 +175,7 @@ io.on('connection', (socket) => {
     if (history.length > HISTORY_LIMIT) history.shift();
     messageHistory.set(room, history);
 
-    // ✅ Translate and send to EACH recipient (including sender)
+    // Translate and send to each recipient
     for (const recipientId of roomSockets) {
       const recipientLang = rooms.get(recipientId)?.lang || 'en';
       const targetLocale = toLocale(recipientLang);
@@ -199,12 +199,12 @@ io.on('connection', (socket) => {
         }
       }
 
-      // ✅ Send to THIS recipient (including the sender)
+      // Send translated message with SAME msgId
       io.to(recipientId).emit('receive_message', {
         author: data.author,
         message: translatedMessage,
         time: data.time,
-        msgId: msgId, // ✅ msgId for deduplication
+        msgId: msgId, // ✅ Same msgId from frontend
         lang: data.targetLang || 'en',
       });
     }

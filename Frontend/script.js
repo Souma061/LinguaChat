@@ -123,6 +123,7 @@ const sendMessage = () => {
       time: time,
       targetLang: langSelect.value,
       sourceLang,
+      msgId: msgId, // ✅ SEND THE SAME ID TO SERVER
     };
 
     // ✅ Show message immediately (optimistic UI)
@@ -172,7 +173,7 @@ const appendMessage = (data) => {
     bubble.classList.add('me');
   }
 
-  // ✅ Add msgId if available (for tracking)
+  
   if (data.msgId) {
     bubble.id = `msg-${data.msgId}`;
   }

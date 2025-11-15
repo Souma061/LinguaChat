@@ -377,6 +377,4 @@ socket.on('connection_error', () => {
 
 
 
-// socket.on('connect_error', () => {
-//   setStatus('Connection error. Retrying…', 'error');
-// });
+

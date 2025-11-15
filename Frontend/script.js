@@ -173,7 +173,7 @@ const appendMessage = (data) => {
     bubble.classList.add('me');
   }
 
-  
+
   if (data.msgId) {
     bubble.id = `msg-${data.msgId}`;
   }
@@ -211,15 +211,15 @@ const appendMessage = (data) => {
 };
 
 socket.on('receive_message', (data) => {
-  console.log('Received message:', data); // ✅ Debug log
+  console.log('Received message:', data);
 
-  // ✅ If this is OUR message AND it has msgId, DELETE the optimistic one
+
   if (data.author === username && data.msgId) {
     console.log('Checking for msgId:', `msg-${data.msgId}`); // ✅ Debug log
     const sentMsg = messagesDiv.querySelector(`#msg-${data.msgId}`);
 
     if (sentMsg) {
-      console.log('Found message to delete'); // ✅ Debug log
+
       // ✅ DELETE the temporary optimistic message
       sentMsg.remove();
 
@@ -227,7 +227,7 @@ socket.on('receive_message', (data) => {
       appendMessage(data);
       return; // ✅ EXIT - don't duplicate
     } else {
-      console.log('Message ID not found'); // ✅ Debug log
+      console.log('Message ID not found');
     }
   }
 
@@ -334,7 +334,7 @@ const startDemo = () => {
         bubble.append(meta, textEl);
         messagesDiv.appendChild(bubble);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
-      }, index * 900); // Stagger messages by 900ms
+      }, index * 900); 
     });
   }, 1200);
 };

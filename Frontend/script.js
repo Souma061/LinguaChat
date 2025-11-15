@@ -368,10 +368,15 @@ socket.io.on('reconnect_attempt', () => {
 });
 
 
-
-
-
-
-socket.on('connect_error', () => {
+socket.on('connection_error', () => {
   setStatus('Connection error. Retrying…', 'error');
-});
+})
+
+
+
+
+
+
+// socket.on('connect_error', () => {
+//   setStatus('Connection error. Retrying…', 'error');
+// });

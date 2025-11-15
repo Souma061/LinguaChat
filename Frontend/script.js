@@ -3,6 +3,7 @@ const usernameInput = document.getElementById('username');
 const roomInput = document.getElementById('room');
 const login = document.getElementById('login');
 const chat = document.getElementById('chat');
+const shell = document.querySelector('.shell');
 const joinButton = document.getElementById('joinButton');
 const demoButton = document.getElementById('demoButton');
 const sendButton = document.getElementById('sendButton');
@@ -86,17 +87,20 @@ const joinRoom = () => {
     socket.emit('set_username', { username });
     socket.emit('join_room', { room, lang: langSelect.value });
     login.style.display = 'none';
-    chat.style.display = 'block';
+    chat.style.display = 'flex';
+    document.body.classList.add('joined');
+    shell?.classList.add('chat-only');
 
     const url = new URL(window.location.href);
     url.searchParams.set('room', room);
     url.searchParams.set('username', username);
     window.history.replaceState({}, '', url);
 
-    shareLink.hidden = false;
-    shareLinkHeader.hidden = false;
     const shortUrl = `${window.location.origin}?room=${room}&username=${username}`;
-    shareLinkHeader.innerHTML = `📤 Share: <a href="${url}" target="_blank">${shortUrl}</a>`;
+    shareLink.hidden = false;
+    shareLink.innerHTML = `📤 Share this room:<br /><a href="${url}" target="_blank" rel="noopener">${shortUrl}</a>`;
+    shareLinkHeader.hidden = false;
+    shareLinkHeader.innerHTML = `📤 <a href="${url}" target="_blank" rel="noopener" title="${shortUrl}">Open link</a>`;
 
     messageInput.disabled = false;
     sendButton.disabled = false;
@@ -334,7 +338,7 @@ const startDemo = () => {
         bubble.append(meta, textEl);
         messagesDiv.appendChild(bubble);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
-      }, index * 900); 
+      }, index * 900);
     });
   }, 1200);
 };

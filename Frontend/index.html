@@ -11,48 +11,55 @@
 
     <div class="shell">
       <aside id="login">
-        <h2>LinguaChat</h2>
+        <header class="sidebar-header">
+          <h2>LinguaChat <span aria-hidden="true">💬</span></h2>
+          <p class="sidebar-subtitle">Translate together in real time</p>
+        </header>
 
-        <div>
-          <label for="username" class="input-label">Username:</label>
-          <input id="username" type="text" placeholder="Enter your name" />
-        </div>
+        <section class="login-card">
+          <div>
+            <label for="username" class="input-label">Username:</label>
+            <input id="username" type="text" placeholder="Enter your name" />
+          </div>
 
-        <div>
-          <label for="room" class="input-label">Room:</label>
-          <input id="room" type="text" placeholder="Enter room name" />
-        </div>
+          <div>
+            <label for="room" class="input-label">Room:</label>
+            <input id="room" type="text" placeholder="Enter room name" />
+          </div>
 
-        <button id="joinButton">Join Room</button>
-        <button id="demoButton">🎬 Quick Demo</button>
+          <button id="joinButton">Join Room</button>
+          <button id="demoButton">🎬 Quick Demo</button>
 
-        <p class="hint">or join a demo room instantly</p>
+          <p class="hint">or join a demo room instantly</p>
 
-        <div id="roomUsers" class="presence"></div>
-        <p id="shareLink" class="hint" hidden></p>
+          <p id="shareLink" class="hint" hidden></p>
+        </section>
+
+        <section id="roomUsers" class="presence"></section>
       </aside>
 
-      <main id="chat" style="display: none">
+      <main id="chat">
         <header class="chat-header">
-          <div>
-            <h2>LinguaChat 💬</h2>
-            <p id="roomInfo"></p>
-            <p id="shareLinkHeader" class="hint" hidden></p>
-            <p class="powered">
-              Powered by
-              <a href="https://lingo.dev" target="_blank" rel="noopener"
-                >Lingo.dev</a
-              >
-            </p>
+          <div class="chat-header-left">
+            <h2>LinguaChat <span aria-hidden="true">💬</span></h2>
+            <span id="roomInfo" class="room-pill"></span>
           </div>
-          <select id="language">
-            <option value="en">English</option>
-            <option value="hi">Hindi</option>
-            <option value="bn">Bengali</option>
-            <option value="es">Spanish</option>
-            <option value="fr">French</option>
-          </select>
+          <div class="chat-header-right">
+            <p id="shareLinkHeader" class="share-chip" hidden></p>
+            <select id="language">
+              <option value="en">English</option>
+              <option value="hi">Hindi</option>
+              <option value="bn">Bengali</option>
+              <option value="es">Spanish</option>
+              <option value="fr">French</option>
+            </select>
+          </div>
         </header>
+
+        <p class="powered">
+          Powered by
+          <a href="https://lingo.dev" target="_blank" rel="noopener">Lingo.dev</a>
+        </p>
 
         <div id="messages" class="messages"></div>
 

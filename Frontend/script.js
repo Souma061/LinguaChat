@@ -367,6 +367,11 @@ socket.io.on('reconnect_attempt', () => {
   setStatus('Reconnecting…', 'warning');
 });
 
+
+
+
+
+
 socket.on('connect_error', () => {
   setStatus('Connection error. Retrying…', 'error');
 });

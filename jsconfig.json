@@ -7,12 +7,10 @@
     "allowSyntheticDefaultImports": true,
     "ignoreDeprecations": "6.0"
   },
-  "include": ["Backend/**/*.js", "Frontend/**/*.js"],
   "exclude": [
     "node_modules",
     "**/node_modules/*",
     "dist",
-    "build",
     "**/*.png",
     "**/*.jpg",
     "**/*.jpeg",

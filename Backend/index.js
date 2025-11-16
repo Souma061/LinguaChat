@@ -206,7 +206,7 @@ io.on('connection', (socket) => {
         original: data.message,
         time: data.time,
         msgId: msgId,
-        lang: data.targetLang || 'en',
+        lang: data.sourceLang || 'auto',
       });
     }
   });

@@ -20,7 +20,7 @@ let username = '';
 let room = '';
 let sourceLang = 'auto';
 
-// Demo configuration
+
 const DEMO_ROOM = 'Demo-Room';
 const DEMO_MESSAGES = [
   {
@@ -64,9 +64,9 @@ const setStatus = (text, tone = 'info') => {
   }
 };
 
-// Detect and keep track of the language the user types in so recipients can request translations reliably.
+
 const detectSourceLanguage = (text) => {
-  // Very naive detection: stop gap until backend recognition is wired.
+
   const patterns = {
     hi: /[\u0900-\u097f]/,
     es: /[ñáéíóúü]/i,
@@ -118,7 +118,7 @@ const sendMessage = () => {
   const msg = messageInput.value;
 
   if (msg.trim() !== '') {
-    const msgId = `${username}-${Date.now()}`; // ✅ Generate matching ID
+    const msgId = `${username}-${Date.now()}`;
     const time = new Date().toLocaleTimeString();
     const data = {
       room,
@@ -127,10 +127,10 @@ const sendMessage = () => {
       time: time,
       targetLang: langSelect.value,
       sourceLang,
-      msgId: msgId, // ✅ SEND THE SAME ID TO SERVER
+      msgId: msgId,
     };
 
-    // ✅ Show message immediately (optimistic UI)
+
     const bubble = document.createElement('div');
     bubble.className = 'bubble me new';
     bubble.id = `msg-${msgId}`; // ✅ Use msgId
@@ -188,7 +188,7 @@ const appendMessage = (data) => {
   const authorEl = document.createElement('span');
   authorEl.textContent = data.author;
 
-  // ✅ Add language badge if available
+
   let langBadgeEl = null;
   if (data.lang) {
     langBadgeEl = document.createElement('span');
@@ -208,7 +208,6 @@ const appendMessage = (data) => {
   textEl.className = 'text';
   textEl.textContent = data.message;
 
-  // Show original if different from translation
   if (data.original && data.original !== data.message) {
     const originalEl = document.createElement('div');
     originalEl.className = 'original-text';
@@ -227,15 +226,15 @@ socket.on('receive_message', (data) => {
 
 
   if (data.author === username && data.msgId) {
-    console.log('Checking for msgId:', `msg-${data.msgId}`); // ✅ Debug log
+    console.log('Checking for msgId:', `msg-${data.msgId}`);
     const sentMsg = messagesDiv.querySelector(`#msg-${data.msgId}`);
 
     if (sentMsg) {
 
-      // ✅ DELETE the temporary optimistic message
+
       sentMsg.remove();
 
-      // ✅ Show the confirmed message from server
+
       appendMessage(data);
       return; // ✅ EXIT - don't duplicate
     } else {
@@ -243,7 +242,7 @@ socket.on('receive_message', (data) => {
     }
   }
 
-  // ✅ For OTHER users' messages
+
   appendMessage(data);
 });
 
@@ -314,7 +313,7 @@ const startDemo = () => {
   langSelect.value = 'en';
   joinRoom();
 
-  // Auto-load demo messages with staggered timing
+  
   setTimeout(() => {
     DEMO_MESSAGES.forEach((msg, index) => {
       setTimeout(() => {
@@ -379,10 +378,3 @@ socket.io.on('reconnect_attempt', () => {
 socket.on('connection_error', () => {
   setStatus('Connection error. Retrying…', 'error');
 })
-
-
-
-
-
-
-

@@ -1,6 +1,4 @@
-/* LinguaChat - Professional WhatsApp-inspired two-pane layout */
 
-/* ---------- Base Reset ---------- */
 html,
 body {
   height: 100%;
@@ -28,7 +26,7 @@ body {
   line-height: 1.5;
 }
 
-/* ---------- Status Banner ---------- */
+
 .status-banner {
   position: fixed;
   top: 14px;
@@ -59,7 +57,7 @@ body {
   border-color: #664d03;
 }
 
-/* ---------- Shell Layout ---------- */
+
 .shell {
   width: calc(100vw - 48px);
   height: calc(100vh - 48px);
@@ -80,7 +78,7 @@ body {
   grid-template-rows: 1fr;
 }
 
-/* ---------- Sidebar ---------- */
+
 #login {
   background: #111b21;
   padding: 28px 26px;
@@ -259,7 +257,7 @@ body {
   border-radius: 12px;
 }
 
-/* ---------- Chat Pane ---------- */
+
 #chat {
   display: flex !important;
   flex-direction: column;
@@ -416,7 +414,7 @@ body.joined #login button {
   text-decoration: underline;
 }
 
-/* ---------- Messages ---------- */
+
 #messages {
   flex: 1 1 auto;
   display: flex;
@@ -539,7 +537,7 @@ body.joined #login button {
   font-style: normal;
 }
 
-/* ---------- Composer ---------- */
+
 .composer {
   display: flex !important;
   gap: 12px;
@@ -627,7 +625,6 @@ body.joined #login button {
   margin-left: 6px;
 }
 
-/* ---------- Responsive ---------- */
 @media (max-width: 1024px) {
   body {
     padding: 16px;

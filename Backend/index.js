@@ -182,11 +182,11 @@ io.on('connection', (socket) => {
 
       let translatedMessage = data.message;
 
-      if (lingo && targetLocale && targetLocale !== sourceLocale) {
+      if (lingo && targetLocale) {
         try {
           translatedMessage =
             (await lingo.localizeText(data.message, {
-              sourceLocale,
+              sourceLocale: null,
               targetLocale,
               fast: true,
             })) || data.message;
@@ -203,8 +203,9 @@ io.on('connection', (socket) => {
       io.to(recipientId).emit('receive_message', {
         author: data.author,
         message: translatedMessage,
+        original: data.message,
         time: data.time,
-        msgId: msgId, // ✅ Same msgId from frontend
+        msgId: msgId,
         lang: data.targetLang || 'en',
       });
     }

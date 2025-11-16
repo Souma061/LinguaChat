@@ -482,6 +482,20 @@ body.joined #login button {
   word-break: break-word;
 }
 
+.original-text {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-style: italic;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.bubble.me .original-text {
+  color: rgba(255, 255, 255, 0.7);
+  border-top-color: rgba(255, 255, 255, 0.2);
+}
+
 .bubble .time {
   font-size: 0.7rem;
   opacity: 0.75;

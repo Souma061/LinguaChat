@@ -208,6 +208,14 @@ const appendMessage = (data) => {
   textEl.className = 'text';
   textEl.textContent = data.message;
 
+  // Show original if different from translation
+  if (data.original && data.original !== data.message) {
+    const originalEl = document.createElement('div');
+    originalEl.className = 'original-text';
+    originalEl.textContent = `📝 ${data.original}`;
+    textEl.appendChild(originalEl);
+  }
+
   bubble.append(meta, textEl);
   messagesDiv.appendChild(bubble);
   messagesDiv.scrollTop = messagesDiv.scrollHeight;

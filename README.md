@@ -149,13 +149,4 @@ Happy hacking! 🚀
 ## 📁 Video Demo
 
 
-
-
-
-
-https://github.com/user-attachments/assets/173b8324-d75b-4d15-a375-d0b32ced0e80
-
-
-
-
-
+https://youtu.be/RAg2pKxgBnU

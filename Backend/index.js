@@ -1,6 +1,7 @@
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
+import fs from 'fs';
 import http from 'http';
 import { LingoDotDevEngine } from 'lingo.dev/sdk';
 import path from 'path';
@@ -15,11 +16,17 @@ const __dirname = path.dirname(__filename);
 export const app = express();
 app.use(cors());
 
-app.use(express.static(path.join(__dirname, '../Frontend')));
-
 app.get('/health', (_, res) => {
   res.json({ status: 'ok' });
 });
+
+const reactDistPath = path.join(__dirname, '../Frontend_React/dist');
+if (process.env.NODE_ENV === 'production' && fs.existsSync(reactDistPath)) {
+  app.use(express.static(reactDistPath));
+  app.get('*', (_, res) => {
+    res.sendFile(path.join(reactDistPath, 'index.html'));
+  });
+}
 
 const localeMap = {
   en: 'en',
@@ -199,7 +206,7 @@ io.on('connection', (socket) => {
         }
       }
 
-     
+
       io.to(recipientId).emit('receive_message', {
         author: data.author,
         message: translatedMessage,

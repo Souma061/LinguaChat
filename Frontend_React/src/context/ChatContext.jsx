@@ -1,16 +1,8 @@
-import { createContext, useContext, useState, useCallback, useRef, useEffect } from "react";
+import { createContext, useCallback, useEffect, useRef, useState } from "react";
 import useSocket from "../hooks/useSocket";
-import { generateMessageid, formatTime } from "../utils/helper";
+import { DEMO_MESSAGES, formatTime, generateMessageid } from "../utils/helper";
 
 const ChatContext = createContext();
-
-export function useChatContext() {
-  const context = useContext(ChatContext);
-  if (!context) {
-    throw new Error("useChatContext must be used within ChatProvider");
-  }
-  return context;
-}
 
 export const ChatProvider = ({ children }) => {
   const [userName, setUserName] = useState("");
@@ -208,6 +200,20 @@ export const ChatProvider = ({ children }) => {
     setStatus({ text: "Left the room.", tone: "info" });
   }, []);
 
+  /** ─────────────────────────────────────────────
+   *   DEMO MODE - Populate fake messages
+   * ───────────────────────────────────────────── */
+  const startDemoMode = useCallback(() => {
+    setTimeout(() => {
+      const demoMsgs = DEMO_MESSAGES.map((msg, index) => ({
+        ...msg,
+        time: formatTime(new Date(Date.now() - (DEMO_MESSAGES.length - index) * 2000)),
+        msgId: `demo-${index}`,
+      }));
+      setMessages(demoMsgs);
+    }, 1200);
+  }, []);
+
   /** PROVIDER VALUE */
   const value = {
     userName,
@@ -223,6 +229,7 @@ export const ChatProvider = ({ children }) => {
     sendChatMessage,
     changeLanguage,
     leaveRoom,
+    startDemoMode,
     setStatus,
 
     getSocket: socketMethods.getSocket,

@@ -1,0 +1,130 @@
+.bubble {
+  background: #2d2d2d;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  margin-bottom: 0.75rem;
+  max-width: 70%;
+  word-wrap: break-word;
+  animation: slideIn 0.2s ease-out;
+}
+
+.bubble.me {
+  background: #005c4b;
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.author {
+  font-weight: 600;
+  color: #25d366;
+}
+
+.bubble.me .author {
+  color: #7fffd4;
+}
+
+.langBadge {
+  background: rgba(37, 211, 102, 0.2);
+  color: #25d366;
+  padding: 0.125rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.time {
+  color: #888;
+  font-size: 0.75rem;
+  margin-left: auto;
+}
+
+.pending {
+  font-size: 0.75rem;
+}
+
+.text {
+  color: #e0e0e0;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.originalText {
+  margin-top: 0.5rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  color: #a0a0a0;
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.systemMessage {
+  text-align: center;
+  color: #888;
+  font-size: 0.85rem;
+  padding: 0.5rem;
+  margin: 1rem 0;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 1024px) {
+  .bubble {
+    max-width: 80%;
+  }
+}
+
+@media (max-width: 768px) {
+  .bubble {
+    max-width: 85%;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.9rem;
+  }
+
+  .meta {
+    font-size: 0.75rem;
+    gap: 0.375rem;
+  }
+
+  .langBadge {
+    font-size: 0.65rem;
+    padding: 0.1rem 0.35rem;
+  }
+
+  .text {
+    font-size: 0.9rem;
+  }
+
+  .originalText {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .bubble {
+    max-width: 90%;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .meta {
+    flex-wrap: wrap;
+  }
+}

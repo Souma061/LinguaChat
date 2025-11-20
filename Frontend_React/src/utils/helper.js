@@ -52,7 +52,7 @@ export const updateUrlParams = (room, username) => {
   window.history.replaceState({}, '', url);
 };
 
-export const generateSharelink = (room, username) => {
+export const generateShareLink = (room, username) => {
   return `${window.location.origin}?room=${encodeURIComponent(room)}&username=${encodeURIComponent(username)}`;
 };
 

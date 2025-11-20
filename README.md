@@ -129,12 +129,6 @@ https://yourapp.onrender.com?room=demo&username=Souma
 
 ---
 
-## 🎥 Demo Video
-
-Upload an `.mp4` directly into the repository to have it embedded automatically.
-
----
-
 ## 🚀 Future Improvements
 
 - Persistent database (MongoDB or PostgreSQL)
@@ -155,6 +149,7 @@ Happy hacking! 🚀
 ## 📁 Video Demo
 
 https://github.com/user-attachments/assets/91b462b9-e2ce-46f5-991b-e08e6fbab987
+
 
 
 

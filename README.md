@@ -31,9 +31,15 @@
 ## 🧰 Tech Stack
 
 **Backend:** Node.js, Express, Socket.IO, Lingo.dev SDK, dotenv
-**Frontend:** HTML, CSS, JavaScript, Socket.IO client
+**Frontend:** React 19, Vite, Socket.IO client, CSS Modules
 **Testing:** Node built-in test runner (`node --test`)
 **Deployment:** Render Web Service
+
+## 🔗 Live Demo
+
+**[Visit LinguaChat Live](https://linguachat-mojs.onrender.com/)**
+
+Try the demo or create your own room to see multilingual chat in action!
 
 ---
 
@@ -51,17 +57,36 @@ LinguaChat/
 │   │   └── health.test.js
 │   └── node_modules/
 │
-├── Frontend/
-│   ├── index.html
-│   ├── style.css
-│   ├── script.js
+├── Frontend_React/
+│   ├── src/
+│   │   ├── main.jsx
+│   │   ├── App.jsx
+│   │   ├── App.css
+│   │   ├── index.css
+│   │   ├── Components/
+│   │   │   ├── ChatPanel/
+│   │   │   ├── LoginPanel/
+│   │   │   ├── Composer/
+│   │   │   ├── MessageBubble/
+│   │   │   ├── UserList/
+│   │   │   └── StatusBanner/
+│   │   ├── context/
+│   │   │   └── ChatContext.jsx
+│   │   ├── hooks/
+│   │   │   ├── useSocket.js
+│   │   │   └── useChatContext.js
+│   │   └── utils/
+│   │       └── helper.js
+│   ├── dist/ (production build)
+│   ├── vite.config.js
+│   ├── package.json
 │   └── node_modules/
 │
 ├── assets/
 │   └── screenshots/
 │       ├── Landing.png
 │       ├── Demo_room.png
-│       └── Multillingual_chat.png
+│       └── Multilingual_chat.png
 │
 └── README.md
 ```
@@ -70,24 +95,44 @@ LinguaChat/
 
 ## 🛠️ Local Setup
 
+### Development Mode
+
 1. **Install dependencies**
    ```bash
    cd Backend
+   npm install
+   cd ../Frontend_React
    npm install
    ```
 2. **Configure environment variables** — create `Backend/.env`
    ```env
    LINGO_API_KEY="your_api_key_here"
    ```
-   Optional override:
-   ```env
-   LINGO_API_URL="custom_api_url"
-   ```
-3. **Start the server**
+3. **Start Backend** (in `Backend/` directory)
    ```bash
    npm run dev
    ```
-   Visit <http://localhost:5000> to join or create a room.
+4. **Start Frontend** (in `Frontend_React/` directory, new terminal)
+   ```bash
+   npm run dev
+   ```
+   - Backend runs on `http://localhost:5000`
+   - Frontend dev server on `http://localhost:5173` with Vite proxy to `/socket.io`
+
+### Production Mode (Build & Deploy)
+
+1. **Build the React app**
+   ```bash
+   cd Frontend_React
+   npm run build
+   ```
+   Creates optimized bundle in `Frontend_React/dist/`
+2. **Start with production backend**
+   ```bash
+   cd Backend
+   NODE_ENV=production npm start
+   ```
+   Backend serves React build from `dist/` on port 5000
 
 ---
 
@@ -104,19 +149,35 @@ Verifies the `/health` route responds with `{ "status": "ok" }`.
 ## ☁️ Deploying to Render
 
 1. Push to the `main` branch.
-2. Create a Render **Web Service** with:
-   - **Root Directory:** `Backend`
-   - **Build Command:** `npm install`
-   - **Start Command:** `npm start`
+2. Create a Render **Web Service** from the GitHub repo:
+   - **Language:** Node
+   - **Root Directory:** `.` (repository root)
+   - **Build Command:**
+     ```bash
+     npm install --prefix Backend && npm install --prefix Frontend_React && npm run build --prefix Frontend_React
+     ```
+   - **Start Command:**
+     ```bash
+     NODE_ENV=production npm start --prefix Backend
+     ```
 3. Configure environment variables:
-   - `LINGO_API_KEY`
-   - (Optional) `NODE_VERSION=20`
+   - `LINGO_API_KEY` (your Lingo.dev API key)
+   - Optional: `LINGO_API_URL` (custom Lingo.dev endpoint)
 4. Deploy 🚀
+
+Render will:
+
+- Clone your repo
+- Install dependencies for both Backend and Frontend_React
+- Build the React production bundle
+- Start the backend server serving the built React app
+
+**Live URL:** `https://your-service.onrender.com`
 
 Shareable invite example:
 
 ```
-https://yourapp.onrender.com?room=demo&username=Souma
+https://linguachat-mojs.onrender.com?room=demo&username=YourName
 ```
 
 ---
@@ -147,6 +208,5 @@ LinguaChat was built to make global communication effortless. Feel free to fork,
 Happy hacking! 🚀
 
 ## 📁 Video Demo
-
 
 https://youtu.be/RAg2pKxgBnU

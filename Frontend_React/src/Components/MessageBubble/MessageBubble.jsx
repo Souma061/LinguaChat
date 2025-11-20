@@ -1,5 +1,5 @@
 import { useChatContext } from "../../hooks/useChatContext";
-import styles from "./MessageBubble.module.css";
+import styles from "./Messagebubble.module.css";
 
 function MessageBubble({ message }) {
   const { userName } = useChatContext();   // ✅ correct key from provider

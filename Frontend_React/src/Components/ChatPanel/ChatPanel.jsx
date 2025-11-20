@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useChatContext } from "../../hooks/useChatContext";
 import Composer from "../Composer/Composer";
 import MessageBubble from "../MessageBubble/MessageBubble";
-import styles from "./ChatPanel.module.css";
+import styles from "./Chatpanel.module.css";
 
 function ChatPanel() {
   const { messages, room } = useChatContext();

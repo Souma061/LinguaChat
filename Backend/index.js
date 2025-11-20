@@ -23,7 +23,7 @@ app.get('/health', (_, res) => {
 const reactDistPath = path.join(__dirname, '../Frontend_React/dist');
 if (process.env.NODE_ENV === 'production' && fs.existsSync(reactDistPath)) {
   app.use(express.static(reactDistPath));
-  app.get('*', (_, res) => {
+  app.get('/*', (_, res) => {
     res.sendFile(path.join(reactDistPath, 'index.html'));
   });
 }

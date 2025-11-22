@@ -63,6 +63,14 @@
   color: #707070;
 }
 
+.input:invalid {
+  border-color: #3d3d3d;
+}
+
+.input:invalid:focus {
+  border-color: #25d366;
+}
+
 .joinButton,
 .demoButton {
   width: 100%;

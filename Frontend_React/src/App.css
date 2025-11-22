@@ -24,9 +24,10 @@ body {
 .app {
   display: flex;
   width: 100vw;
-  height: 100vh;
+  height: calc(100vh - 2.25rem);
   overflow: hidden;
   position: relative;
+  margin-top: 2.25rem;
 }
 
 /* Tablet breakpoint */

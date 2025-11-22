@@ -16,9 +16,7 @@ export const ChatProvider = ({ children }) => {
 
   const socketMethodsRef = useRef(null);
 
-  /** ─────────────────────────────────────────────
-   *   SOCKET EVENT HANDLERS
-   * ───────────────────────────────────────────── */
+
   const socketHandlers = {
     onConnect: useCallback(
       () => {
@@ -127,9 +125,6 @@ export const ChatProvider = ({ children }) => {
     socketMethodsRef.current = socketMethods;
   }, [socketMethods]);
 
-  /** ─────────────────────────────────────────────
-   *   JOIN ROOM
-   * ───────────────────────────────────────────── */
   const joinChatRoom = useCallback((roomName, username, language) => {
     setUserName(username);
     setRoom(roomName);
@@ -144,9 +139,7 @@ export const ChatProvider = ({ children }) => {
     setStatus({ text: `Joined room ${roomName}`, tone: "success" });
   }, []);
 
-  /** ─────────────────────────────────────────────
-   *   SEND MESSAGE
-   * ───────────────────────────────────────────── */
+
   const sendChatMessage = useCallback(
     (message, sourceLang = "auto") => {
       if (!message.trim() || !isConnected || !socketMethodsRef.current) return;
@@ -174,9 +167,7 @@ export const ChatProvider = ({ children }) => {
     [userName, room, lang, isConnected]
   );
 
-  /** ─────────────────────────────────────────────
-   *   CHANGE USER LANGUAGE
-   * ───────────────────────────────────────────── */
+
   const changeLanguage = useCallback(
     (newLang) => {
       setLang(newLang);
@@ -187,9 +178,7 @@ export const ChatProvider = ({ children }) => {
     [isJoined, room]
   );
 
-  /** ─────────────────────────────────────────────
-   *   LEAVE ROOM
-   * ───────────────────────────────────────────── */
+
   const leaveRoom = useCallback(() => {
     setUserName("");
     setRoom("");
@@ -200,9 +189,6 @@ export const ChatProvider = ({ children }) => {
     setStatus({ text: "Left the room.", tone: "info" });
   }, []);
 
-  /** ─────────────────────────────────────────────
-   *   DEMO MODE - Populate fake messages
-   * ───────────────────────────────────────────── */
   const startDemoMode = useCallback(() => {
     setTimeout(() => {
       const demoMsgs = DEMO_MESSAGES.map((msg, index) => ({
@@ -214,7 +200,6 @@ export const ChatProvider = ({ children }) => {
     }, 1200);
   }, []);
 
-  /** PROVIDER VALUE */
   const value = {
     userName,
     room,

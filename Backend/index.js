@@ -7,6 +7,8 @@ import { LingoDotDevEngine } from 'lingo.dev/sdk';
 import path from 'path';
 import { Server } from 'socket.io';
 import { fileURLToPath } from 'url';
+import { connectDB } from './db.js';
+import { Message } from './models.js';
 
 dotenv.config();
 
@@ -53,9 +55,8 @@ const lingo = process.env.LINGO_API_KEY
     })
   : null;
 
-const rooms = new Map();
-const messageHistory = new Map();
-const HISTORY_LIMIT = 50;
+const rooms = new Map(); // Keep for active sessions only (lightweight)
+const translationCache = new Map(); // Cache translations
 
 const roomMembers = (room) =>
   Array.from(io.sockets.adapter.rooms.get(room) ?? []).map((id) => ({
@@ -74,6 +75,12 @@ const translateText = async (text, sourceLocale, targetLang) => {
     return { text, error: null, targetLocale };
   }
 
+  // Check cache first
+  const cacheKey = `${text}:${targetLocale}`;
+  if (translationCache.has(cacheKey)) {
+    return { text: translationCache.get(cacheKey), error: null, targetLocale };
+  }
+
   try {
     const output =
       (await lingo.localizeText(text, {
@@ -81,6 +88,14 @@ const translateText = async (text, sourceLocale, targetLang) => {
         targetLocale,
         fast: true,
       })) || text;
+
+    translationCache.set(cacheKey, output);
+    if (translationCache.size > 1000) {
+      // Limit cache size
+      const firstKey = translationCache.keys().next().value;
+      translationCache.delete(firstKey);
+    }
+
     return { text: output, error: null, targetLocale };
   } catch (error) {
     console.error('Lingo.dev translation failed:', error);
@@ -103,37 +118,46 @@ io.on('connection', (socket) => {
     socket.emit('room_users', occupants);
     socket.to(room).emit('room_users', occupants);
 
-    const history = messageHistory.get(room) ?? [];
-    if (history.length) {
-      const targetLang = lang ?? 'en';
-      const translatedHistory = [];
+    try {
+      // Fetch last 50 messages from MongoDB
+      const history = await Message.find({ room })
+        .sort({ createdAt: -1 })
+        .limit(50)
+        .lean();
 
-      for (const entry of history) {
-        if (!entry.translations[targetLang]) {
-          const result = await translateText(
-            entry.original,
-            entry.sourceLocale,
-            targetLang
-          );
+      if (history.length) {
+        const targetLang = lang ?? 'en';
 
-          entry.translations[targetLang] = result.text;
-
-          if (result.error) {
-            socket.emit(
-              'translation_error',
-              `Translation unavailable for ${result.targetLocale}. Showing original message.`
+        // PARALLELIZED: Translate all missing translations at once
+        const translationPromises = history.map(async (entry) => {
+          if (!entry.translations[targetLang]) {
+            const result = await translateText(
+              entry.original,
+              entry.sourceLocale,
+              targetLang
             );
+            entry.translations[targetLang] = result.text;
+
+            if (result.error) {
+              socket.emit(
+                'translation_error',
+                `Translation unavailable. Showing original message.`
+              );
+            }
           }
-        }
 
-        translatedHistory.push({
-          author: entry.author,
-          message: entry.translations[targetLang] ?? entry.original,
-          time: entry.time,
+          return {
+            author: entry.author,
+            message: entry.translations[targetLang] ?? entry.original,
+            time: entry.time,
+          };
         });
-      }
 
-      socket.emit('room_history', translatedHistory);
+        const translatedHistory = await Promise.all(translationPromises);
+        socket.emit('room_history', translatedHistory.reverse());
+      }
+    } catch (error) {
+      console.error('Error loading history:', error);
     }
   });
 
@@ -169,58 +193,82 @@ io.on('connection', (socket) => {
     const roomSockets = io.sockets.adapter.rooms.get(room);
     if (!roomSockets) return;
 
+    try {
+      // Save to MongoDB
+      await Message.create({
+        room,
+        author: data.author,
+        original: data.message,
+        translations: {},
+        sourceLocale,
+        msgId,
+        time: data.time,
+      });
+    } catch (error) {
+      console.error('Error saving message:', error);
+    }
 
-    const history = messageHistory.get(room) || [];
-    history.push({
-      author: data.author,
-      original: data.message,
-      translations: {},
-      time: data.time,
-      sourceLocale: sourceLocale,
-      msgId: msgId,
-    });
-    if (history.length > HISTORY_LIMIT) history.shift();
-    messageHistory.set(room, history);
-
-
+    // Group recipients by language for efficient translation
+    const recipientsByLang = new Map();
     for (const recipientId of roomSockets) {
       const recipientLang = rooms.get(recipientId)?.lang || 'en';
       const targetLocale = toLocale(recipientLang);
-
-      let translatedMessage = data.message;
-
-      if (lingo && targetLocale) {
-        try {
-          translatedMessage =
-            (await lingo.localizeText(data.message, {
-              sourceLocale: null,
-              targetLocale,
-              fast: true,
-            })) || data.message;
-        } catch (err) {
-          console.error('Lingo.dev translation failed:', err);
-          io.to(recipientId).emit(
-            'translation_error',
-            'Translation unavailable; showing original text.'
-          );
-        }
+      if (!recipientsByLang.has(targetLocale)) {
+        recipientsByLang.set(targetLocale, []);
       }
-
-
-      io.to(recipientId).emit('receive_message', {
-        author: data.author,
-        message: translatedMessage,
-        original: data.message,
-        time: data.time,
-        msgId: msgId,
-        lang: data.targetLang || 'en',
-      });
+      recipientsByLang.get(targetLocale).push(recipientId);
     }
+
+    // PARALLELIZED: Translate once per unique language, then emit to all users with that language
+    const translationPromises = Array.from(recipientsByLang.entries()).map(
+      async ([targetLocale, recipients]) => {
+        let translatedMessage = data.message;
+
+        if (lingo && targetLocale) {
+          try {
+            const result = await translateText(
+              data.message,
+              sourceLocale,
+              targetLocale.split('-')[0]
+            );
+            translatedMessage = result.text;
+          } catch (err) {
+            console.error('Translation failed:', err);
+            recipients.forEach((recipientId) => {
+              io.to(recipientId).emit(
+                'translation_error',
+                'Translation unavailable; showing original text.'
+              );
+            });
+          }
+        }
+
+        return { targetLocale, recipients, translatedMessage };
+      }
+    );
+
+    const results = await Promise.all(translationPromises);
+
+    // Emit to all recipients with their translated message
+    results.forEach(({ recipients, translatedMessage }) => {
+      recipients.forEach((recipientId) => {
+        io.to(recipientId).emit('receive_message', {
+          author: data.author,
+          message: translatedMessage,
+          original: data.message,
+          time: data.time,
+          msgId: msgId,
+          lang: data.targetLang || 'en',
+        });
+      });
+    });
   });
 });
 
 const PORT = process.env.PORT || 5000;
 
+// Initialize DB and start server
 if (process.env.NODE_ENV !== 'test') {
+  await connectDB();
   server.listen(PORT, () => console.log(`Server running on ${PORT}`));
 }

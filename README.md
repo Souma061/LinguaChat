@@ -19,10 +19,12 @@
 ## ✨ Features
 
 - 🔗 Join rooms or share invite links using `?room=&username=`
-- 🌐 Real-time translation to each user’s preferred language
+- 🌐 Real-time translation to each user's preferred language
 - 👥 Presence panel with usernames and language tags
 - 🔄 Auto reconnection for stable chat sessions
-- 🕒 In-memory message history (last 50 messages)
+- 💾 **Persistent message storage** with MongoDB integration
+- 🔍 **Translation caching** for optimized performance
+- 🕒 **Full message history** with room and timestamp indexing
 - 🛠️ `/health` API route plus automated tests
 - 🎨 Clean WhatsApp-style responsive UI
 
@@ -49,7 +51,10 @@ Try the demo or create your own room to see multilingual chat in action!
 LinguaChat/
 │
 ├── Backend/
-│   ├── index.js
+│   ├── index.js              (main server & Socket.IO logic)
+│   ├── db.js                 (MongoDB connection & utilities)
+│   ├── models.js             (Mongoose schemas)
+│   ├── constants.js          (configuration constants)
 │   ├── package.json
 │   ├── .env
 │   ├── .env.example
@@ -107,6 +112,8 @@ LinguaChat/
 2. **Configure environment variables** — create `Backend/.env`
    ```env
    LINGO_API_KEY="your_api_key_here"
+   PORT=5000
+   MONGODB_URI="mongodb+srv://user:password@cluster.mongodb.net/LinguaChat"
    ```
 3. **Start Backend** (in `Backend/` directory)
    ```bash
@@ -136,6 +143,49 @@ LinguaChat/
 
 ---
 
+## 🗄️ Database Architecture
+
+### MongoDB Integration
+
+LinguaChat uses **MongoDB** with Mongoose ODM for persistent message storage and caching optimization.
+
+**Key Files:**
+
+- `db.js` — Database connection with connection pooling (min: 2, max: 10)
+- `models.js` — Mongoose message schema with optimization indexes
+- `constants.js` — Application constants (DB name, etc.)
+
+**Message Schema:**
+
+```javascript
+{
+  room: String,           // Room identifier (indexed for fast queries)
+  author: String,         // Message sender's username
+  original: String,       // Original untranslated message
+  translations: Map,      // Language-specific translations {langCode: translatedText}
+  sourceLocale: String,   // Source language locale
+  msgID: String,          // Unique message identifier
+  time: Date,             // Message send time
+  createdAt: Date         // Database record creation time (indexed)
+}
+```
+
+**Indexes:**
+
+- `room` — Fast room filtering
+- `createdAt` — Time-based sorting
+- Compound `{room, createdAt}` — Efficient room history retrieval
+
+### Features
+
+- ✅ Full message history with translations
+- ✅ Translation result caching for performance
+- ✅ Room-based message organization
+- ✅ Automatic timestamp tracking
+- ✅ Scalable connection pooling
+
+---
+
 ## 🧪 Tests
 
 ```bash
@@ -162,6 +212,8 @@ Verifies the `/health` route responds with `{ "status": "ok" }`.
      ```
 3. Configure environment variables:
    - `LINGO_API_KEY` (your Lingo.dev API key)
+   - `MONGODB_URI` (MongoDB Atlas connection string)
+   - `PORT` (optional, defaults to 5000)
    - Optional: `LINGO_API_URL` (custom Lingo.dev endpoint)
 4. Deploy 🚀
 
@@ -192,12 +244,13 @@ https://linguachat-mojs.onrender.com?room=demo&username=YourName
 
 ## 🚀 Future Improvements
 
-- Persistent database (MongoDB or PostgreSQL)
 - Typing indicators and read receipts
 - Message reactions and emoji picker
 - Light/dark theme toggle
 - User authentication and profiles
 - Analytics dashboard for room activity
+- Message search and filtering
+- Voice messages and file sharing
 
 ---
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 
 const useSocket = (handlers = {}) => {
@@ -65,6 +65,10 @@ const useSocket = (handlers = {}) => {
       handlersRef.current.onTranslationError?.(msg);
     });
 
+    socket.on('message_status', (statusData) => {
+      handlersRef.current.onMessageStatus?.(statusData);
+    });
+
     // --- Cleanup ---
     return () => {
       if (!socketRef.current) return;
@@ -74,6 +78,7 @@ const useSocket = (handlers = {}) => {
       socket.off('room_history');
       socket.off('room_users');
       socket.off('translation_error');
+      socket.off('message_status');
       socket.off('connect');
       socket.off('disconnect');
       socket.off('connect_error');

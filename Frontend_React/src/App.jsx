@@ -4,6 +4,7 @@ import LoginPanel from "./Components/LoginPanel/LoginPanel";
 import Statusbanner from "./Components/StatusBanner/Statusbanner";
 import UserList from "./Components/UserList/UserList";
 import { ChatProvider } from "./context/ChatContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import { useChatContext } from "./hooks/useChatContext";
 
 function AppContent() {
@@ -28,9 +29,11 @@ function AppContent() {
 
 function App() {
   return (
-    <ChatProvider>
-      <AppContent />
-    </ChatProvider>
+    <ThemeProvider>
+      <ChatProvider>
+        <AppContent />
+      </ChatProvider>
+    </ThemeProvider>
   );
 }
 

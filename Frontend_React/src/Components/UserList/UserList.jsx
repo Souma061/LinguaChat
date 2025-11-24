@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useChatContext } from "../../hooks/useChatContext";
 import { generateShareLink } from "../../utils/helper";
+import ThemeToggler from "../ThemeToggler/ThemeToggler";
 import styles from "./UserList.module.css";
 
 function UserList() {
@@ -30,6 +31,8 @@ function UserList() {
             <option value="fr">French</option>
           </select>
         </div>
+
+        <ThemeToggler />
 
         {room && (
           <div className={styles.shareSection}>
@@ -93,6 +96,8 @@ function UserList() {
             <option value="fr">French</option>
           </select>
         </div>
+
+        <ThemeToggler />
 
         {room && (
           <div className={styles.shareSection}>

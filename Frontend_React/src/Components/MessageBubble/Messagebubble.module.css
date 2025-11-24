@@ -1,5 +1,5 @@
 .bubble {
-  background: #2d2d2d;
+  background: var(--bg-tertiary);
   padding: 0.75rem 1rem;
   border-radius: 12px;
   margin-bottom: 0.75rem;
@@ -7,12 +7,14 @@
   word-wrap: break-word;
   word-break: break-word;
   animation: slideIn 0.2s ease-out;
+  transition: background-color 0.3s ease;
 }
 
 .bubble.me {
-  background: #005c4b;
+  background: var(--accent-color);
   margin-left: auto;
   margin-right: 0;
+  color: white;
 }
 
 .meta {
@@ -25,16 +27,16 @@
 
 .author {
   font-weight: 600;
-  color: #25d366;
+  color: var(--accent-color);
 }
 
 .bubble.me .author {
-  color: #7fffd4;
+  color: white;
 }
 
 .langBadge {
-  background: rgba(37, 211, 102, 0.2);
-  color: #25d366;
+  background: rgba(33, 150, 243, 0.2);
+  color: var(--accent-color);
   padding: 0.125rem 0.4rem;
   border-radius: 4px;
   font-size: 0.7rem;
@@ -42,17 +44,48 @@
 }
 
 .time {
-  color: #888;
+  color: var(--text-secondary);
   font-size: 0.75rem;
   margin-left: auto;
 }
 
+/* Message Status Indicators */
 .pending {
   font-size: 0.75rem;
+  color: #ffa500;
+  margin-left: 0.5rem;
+  animation: pulse 1.5s infinite;
+}
+
+.sent {
+  font-size: 0.75rem;
+  color: #22c55e;
+  margin-left: 0.5rem;
+}
+
+.failed {
+  font-size: 0.75rem;
+  color: #ef4444;
+  margin-left: 0.5rem;
+  cursor: pointer;
+}
+
+.failed:hover {
+  opacity: 0.8;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 .text {
-  color: #e0e0e0;
+  color: inherit;
   line-height: 1.5;
   font-size: 0.95rem;
 }
@@ -60,20 +93,21 @@
 .originalText {
   margin-top: 0.5rem;
   padding-top: 0.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  color: #a0a0a0;
+  border-top: 1px solid var(--border-color);
+  color: var(--text-secondary);
   font-size: 0.85rem;
   font-style: italic;
 }
 
 .systemMessage {
   text-align: center;
-  color: #888;
+  color: var(--text-secondary);
   font-size: 0.85rem;
   padding: 0.5rem;
   margin: 1rem 0;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-tertiary);
   border-radius: 8px;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 @keyframes slideIn {

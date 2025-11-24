@@ -102,6 +102,28 @@ export const ChatProvider = ({ children }) => {
       setUsers(userList);
     }, []),
 
+    onMessageStatus: useCallback((statusData) => {
+      const { msgId, status, error } = statusData;
+      console.log(`Message ${msgId} status: ${status}`);
+
+      // Update message status in the messages array
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.msgId === msgId
+            ? { ...msg, status, error }
+            : msg
+        )
+      );
+
+      // Show error toast if message failed
+      if (status === 'failed') {
+        setStatus({
+          text: `Failed to send message: ${error}`,
+          tone: 'error',
+        });
+      }
+    }, []),
+
     onTranslationError: useCallback((msg) => {
       console.error("Translation error:", msg);
 
@@ -156,15 +178,44 @@ export const ChatProvider = ({ children }) => {
         sourceLang,
         msgId,
         time,
+        status: 'pending', // Add status field
       };
 
-      // ADD TO UI instantly
+      // ADD TO UI instantly with pending status
       setMessages((prev) => [...prev, data]);
 
       // SEND TO SERVER
       socketMethodsRef.current.sendMessage(data);
     },
     [userName, room, lang, isConnected]
+  );
+
+  const retryMessage = useCallback(
+    (failedMessage) => {
+      if (!isConnected || !socketMethodsRef.current) {
+        setStatus({ text: "Not connected. Cannot retry.", tone: "error" });
+        return;
+      }
+
+      // Update the message status to pending and resend
+      const retryData = {
+        ...failedMessage,
+        status: 'pending',
+        time: formatTime(new Date()),
+      };
+
+      // Update message in UI with pending status
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.msgId === failedMessage.msgId ? retryData : msg
+        )
+      );
+
+      // Resend to server
+      socketMethodsRef.current.sendMessage(retryData);
+      setStatus({ text: "Retrying message...", tone: "info" });
+    },
+    [isConnected]
   );
 
 
@@ -212,6 +263,7 @@ export const ChatProvider = ({ children }) => {
 
     joinChatRoom,
     sendChatMessage,
+    retryMessage,
     changeLanguage,
     leaveRoom,
     startDemoMode,

@@ -63,6 +63,7 @@ const roomMembers = (room) =>
     id,
     username: rooms.get(id)?.username ?? 'Anonymous',
     lang: rooms.get(id)?.lang ?? 'en',
+    status: 'online', // Add online status
   }));
 
 const translateText = async (text, sourceLocale, targetLang) => {
@@ -112,6 +113,7 @@ io.on('connection', (socket) => {
       room,
       lang: lang ?? 'en',
       username: socket.data.username,
+      status: 'online', // Add online status
     });
 
     const occupants = roomMembers(room);
@@ -204,8 +206,20 @@ io.on('connection', (socket) => {
         msgId,
         time: data.time,
       });
+
+      // Emit status confirmation to the sender
+      io.to(data.senderSocketId || socket.id).emit('message_status', {
+        msgId,
+        status: 'sent',
+      });
     } catch (error) {
       console.error('Error saving message:', error);
+      // Emit failed status to sender
+      io.to(data.senderSocketId || socket.id).emit('message_status', {
+        msgId,
+        status: 'failed',
+        error: 'Failed to save message',
+      });
     }
 
     // Group recipients by language for efficient translation

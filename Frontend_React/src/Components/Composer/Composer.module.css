@@ -2,33 +2,34 @@
   display: flex;
   gap: 0.75rem;
   padding: 1rem;
-  background: #1e1e1e;
-  border-top: 1px solid #2d2d2d;
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--border-color);
 }
 
 .input {
   flex: 1;
   padding: 0.875rem 1rem;
-  background: #2d2d2d;
-  border: 1px solid #3d3d3d;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
   border-radius: 24px;
-  color: #fff;
+  color: var(--text-primary);
   font-size: 0.95rem;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, background-color 0.3s ease, color 0.3s ease;
 }
 
 .input:focus {
   outline: none;
-  border-color: #25d366;
+  border-color: var(--accent-color);
 }
 
 .input::placeholder {
-  color: #707070;
+  color: var(--text-secondary);
   font-style: italic;
+  opacity: 0.7;
 }
 
 .input:disabled::placeholder {
-  color: #555;
+  opacity: 0.5;
   font-style: normal;
 }
 
@@ -39,8 +40,8 @@
 
 .sendButton {
   padding: 0.875rem 1.75rem;
-  background: #25d366;
-  color: #fff;
+  background: var(--accent-color);
+  color: white;
   border: none;
   border-radius: 24px;
   font-size: 0.95rem;
@@ -51,7 +52,7 @@
 }
 
 .sendButton:hover:not(:disabled) {
-  background: #20bd5a;
+  background: var(--accent-hover);
   transform: translateY(-1px);
 }
 
@@ -60,7 +61,7 @@
 }
 
 .sendButton:disabled {
-  background: #3d3d3d;
+  background: var(--border-color);
   cursor: not-allowed;
   opacity: 0.5;
 }
@@ -77,7 +78,7 @@
     gap: 0.5rem;
     position: sticky;
     bottom: 0;
-    background: #1e1e1e;
+    background: var(--bg-secondary);
   }
 
   .input {

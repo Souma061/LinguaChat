@@ -2,9 +2,30 @@ import { useChatContext } from "../../hooks/useChatContext";
 import styles from "./Messagebubble.module.css";
 
 function MessageBubble({ message }) {
-  const { userName } = useChatContext();   // ✅ correct key from provider
+  const { userName, retryMessage } = useChatContext();   // ✅ correct key from provider
   const isOwn = message.author === userName; // ✅ correct ownership check
   const isSystem = message.type === "system";
+
+  const getStatusIcon = () => {
+    switch (message.status) {
+      case 'pending':
+        return { icon: '⏳', title: 'Sending...', className: styles.pending };
+      case 'sent':
+        return { icon: '✓', title: 'Sent', className: styles.sent };
+      case 'failed':
+        return { icon: '✕', title: 'Failed to send. Click to retry.', className: styles.failed, isClickable: true };
+      default:
+        return null;
+    }
+  };
+
+  const statusIcon = getStatusIcon();
+
+  const handleRetry = () => {
+    if (message.status === 'failed' && retryMessage) {
+      retryMessage(message);
+    }
+  };
 
   if (isSystem) {
     return (
@@ -27,7 +48,16 @@ function MessageBubble({ message }) {
 
         <span className={styles.time}>{message.time}</span>
 
-        {message.isPending && <span className={styles.pending}>⏳</span>}
+        {statusIcon && isOwn && (
+          <span
+            className={statusIcon.className}
+            title={statusIcon.title}
+            onClick={statusIcon.isClickable ? handleRetry : undefined}
+            style={statusIcon.isClickable ? { cursor: 'pointer' } : {}}
+          >
+            {statusIcon.icon}
+          </span>
+        )}
       </div>
 
       <div className={styles.text}>

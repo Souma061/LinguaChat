@@ -1,13 +1,14 @@
 .loginPanel {
   width: 100%;
   max-width: 400px;
-  background: #1e1e1e;
+  background: var(--bg-secondary);
   padding: 2rem;
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  border-right: 1px solid #2d2d2d;
+  border-right: 1px solid var(--border-color);
   overflow-y: auto;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .header {
@@ -17,13 +18,13 @@
 .header h2 {
   margin: 0;
   font-size: 2rem;
-  color: #fff;
+  color: var(--text-primary);
   font-weight: 600;
 }
 
 .subtitle {
   margin: 0.5rem 0 0 0;
-  color: #a0a0a0;
+  color: var(--text-secondary);
   font-size: 0.9rem;
 }
 
@@ -36,7 +37,7 @@
 .label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #e0e0e0;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   font-weight: 500;
 }
@@ -45,30 +46,31 @@
 .select {
   width: 100%;
   padding: 0.75rem;
-  background: #2d2d2d;
-  border: 1px solid #3d3d3d;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
-  color: #fff;
+  color: var(--text-primary);
   font-size: 1rem;
-  transition: border-color 0.2s;
+  transition: border-color 0.2s, background-color 0.3s ease, color 0.3s ease;
 }
 
 .input:focus,
 .select:focus {
   outline: none;
-  border-color: #25d366;
+  border-color: var(--accent-color);
 }
 
 .input::placeholder {
-  color: #707070;
+  color: var(--text-secondary);
+  opacity: 0.6;
 }
 
 .input:invalid {
-  border-color: #3d3d3d;
+  border-color: var(--border-color);
 }
 
 .input:invalid:focus {
-  border-color: #25d366;
+  border-color: var(--accent-color);
 }
 
 .joinButton,
@@ -84,12 +86,12 @@
 }
 
 .joinButton {
-  background: #25d366;
-  color: #fff;
+  background: var(--accent-color);
+  color: white;
 }
 
 .joinButton:hover {
-  background: #20bd5a;
+  background: var(--accent-hover);
   transform: translateY(-1px);
 }
 
@@ -98,33 +100,35 @@
 }
 
 .demoButton {
-  background: #3d3d3d;
-  color: #fff;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
   margin-top: -0.5rem;
 }
 
 .demoButton:hover {
-  background: #4d4d4d;
+  background: var(--border-color);
 }
 
 .hint {
   text-align: center;
-  color: #888;
+  color: var(--text-secondary);
   font-size: 0.85rem;
   margin: -0.75rem 0 0 0;
 }
 
 .instructions {
-  background: rgba(37, 211, 102, 0.08);
-  border-left: 3px solid #25d366;
+  background: rgba(33, 150, 243, 0.08);
+  border-left: 3px solid var(--accent-color);
   padding: 1rem;
   border-radius: 8px;
   margin-top: -0.5rem;
-  color: #cfdcdf;
+  color: var(--text-secondary);
+  transition: background-color 0.3s ease, border-color 0.3s ease,
+    color 0.3s ease;
 }
 
 .instructions h3 {
-  color: #25d366;
+  color: var(--accent-color);
   font-size: 0.9rem;
   margin: 0 0 0.5rem 0;
   text-transform: uppercase;
@@ -168,20 +172,21 @@
 }
 
 .helpText {
-  color: #7aa096;
+  color: var(--text-secondary);
   font-size: 0.75rem;
   margin: 0.35rem 0 0 0;
   font-style: italic;
 }
 
 .presence {
-  background: #2d2d2d;
+  background: var(--bg-tertiary);
   padding: 1rem;
   border-radius: 8px;
+  transition: background-color 0.3s ease;
 }
 
 .presence strong {
-  color: #e0e0e0;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   display: block;
   margin-bottom: 0.75rem;
@@ -197,7 +202,7 @@
 }
 
 .presence li {
-  color: #b0b0b0;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   display: flex;
   align-items: center;
@@ -205,8 +210,8 @@
 }
 
 .langBadge {
-  background: #3d3d3d;
-  color: #25d366;
+  background: rgba(33, 150, 243, 0.2);
+  color: var(--accent-color);
   padding: 0.125rem 0.5rem;
   border-radius: 4px;
   font-size: 0.75rem;
@@ -223,7 +228,7 @@
   .loginPanel {
     max-width: 100%;
     border-right: none;
-    border-bottom: 1px solid #2d2d2d;
+    border-bottom: 1px solid var(--border-color);
     height: auto;
     max-height: 50vh;
     padding: 1.5rem;

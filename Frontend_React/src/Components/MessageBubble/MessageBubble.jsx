@@ -146,6 +146,28 @@ function MessageBubble({ message }) {
     setSwiped(false);
   };
 
+  const handleReplyQuoteClick = () => {
+    if (!message.replyTo?.msgId) return;
+
+    // Find the message element by msgId
+    const targetElement = document.querySelector(`[data-msgid="${message.replyTo.msgId}"]`);
+
+    if (targetElement) {
+      // Scroll to the element with smooth behavior
+      targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      // Add a highlight effect
+      targetElement.style.backgroundColor = 'var(--accent-color)';
+      targetElement.style.opacity = '0.7';
+
+      // Remove highlight after 2 seconds
+      setTimeout(() => {
+        targetElement.style.backgroundColor = '';
+        targetElement.style.opacity = '';
+      }, 2000);
+    }
+  };
+
   const handleEmojiSelect = (emoji) => {
     const socket = getSocket?.();
     if (!socket || !message.msgId) return;
@@ -171,6 +193,7 @@ function MessageBubble({ message }) {
   return (
     <div
       className={`${styles.bubble} ${isOwn ? styles.me : ''} ${swiped ? styles.swiped : ''}`}
+      data-msgid={message.msgId}
       onDoubleClick={handleDoubleClick}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -213,7 +236,12 @@ function MessageBubble({ message }) {
 
       <div className={styles.text}>
         {message.replyTo && (
-          <div className={styles.replyQuote}>
+          <div
+            className={styles.replyQuote}
+            onClick={handleReplyQuoteClick}
+            style={{ cursor: 'pointer' }}
+            title="Click to jump to message"
+          >
             <div className={styles.replyAuthor}>↩ {message.replyTo.author}</div>
             <div className={styles.replyMessage}>{message.replyTo.message.substring(0, 60)}...</div>
           </div>

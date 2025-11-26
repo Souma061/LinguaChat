@@ -118,6 +118,14 @@
   padding: 0.5rem;
   margin-bottom: 0.5rem;
   border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.replyQuote:hover {
+  background: rgba(0, 0, 0, 0.15);
+  border-left-width: 4px;
+  transform: translateX(2px);
 }
 
 .bubble.me .replyQuote {
@@ -146,6 +154,16 @@
 
 .bubble.me .replyMessage {
   color: rgba(255, 255, 255, 0.8);
+}
+
+.bubble.me .replyQuote {
+  background: rgba(255, 255, 255, 0.2);
+  border-left-color: white;
+}
+
+.bubble.me .replyQuote:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-left-width: 4px;
 }
 
 /* Reply button for mobile swipe gesture */

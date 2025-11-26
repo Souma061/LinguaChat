@@ -17,6 +17,11 @@ const messageSchema = new mongoose.Schema({
   msgId: {
     type: String,
   },
+  replyTo: {
+    msgId: String,
+    author: String,
+    message: String,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

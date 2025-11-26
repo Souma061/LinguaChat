@@ -213,6 +213,7 @@ io.on('connection', (socket) => {
         translations: {},
         sourceLocale,
         msgId,
+        replyTo: data.replyTo || null,
       });
 
       console.log(`Message ${msgId} saved successfully`, savedMessage._id);
@@ -284,6 +285,7 @@ io.on('connection', (socket) => {
           time: data.time,
           msgId: msgId,
           lang: data.targetLang || 'en',
+          replyTo: data.replyTo || null,
         });
       });
     });

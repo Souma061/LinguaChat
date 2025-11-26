@@ -7,7 +7,7 @@
   word-wrap: break-word;
   word-break: break-word;
   animation: slideIn 0.2s ease-out;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, margin-right 0.3s ease;
 }
 
 .bubble.me {
@@ -15,6 +15,16 @@
   margin-left: auto;
   margin-right: 0;
   color: white;
+}
+
+/* Swipe animation - bubble moves right when swiped left */
+.bubble.swiped {
+  margin-right: 50px;
+}
+
+.bubble.me.swiped {
+  margin-left: initial;
+  margin-right: auto;
 }
 
 .meta {
@@ -97,6 +107,84 @@
   color: var(--text-secondary);
   font-size: 0.85rem;
   font-style: italic;
+}
+
+.replyQuote {
+  background: rgba(0, 0, 0, 0.1);
+  border-left: 3px solid var(--accent-color);
+  padding: 0.5rem;
+  margin-bottom: 0.5rem;
+  border-radius: 4px;
+}
+
+.bubble.me .replyQuote {
+  background: rgba(255, 255, 255, 0.2);
+  border-left-color: white;
+}
+
+.replyAuthor {
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--accent-color);
+  margin-bottom: 0.25rem;
+}
+
+.bubble.me .replyAuthor {
+  color: white;
+}
+
+.replyMessage {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bubble.me .replyMessage {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Reply button for mobile swipe gesture */
+.replyBtn {
+  position: absolute;
+  top: 50%;
+  right: -55px;
+  transform: translateY(-50%);
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+  z-index: 1000;
+  white-space: nowrap;
+  animation: slideInFromRight 0.3s ease;
+}
+
+.replyBtn:hover {
+  background: var(--accent-color-hover, #1976d2);
+  transform: translateY(-50%) scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.replyBtn:active {
+  transform: translateY(-50%) scale(0.95);
+}
+
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateY(-50%) translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
 }
 
 .systemMessage {

@@ -1,3 +1,42 @@
+.composerWrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.replyPreview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: var(--bg-tertiary);
+  border-left: 3px solid var(--accent-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.replyText {
+  flex: 1;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clearReplyBtn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0 0.5rem;
+  margin-left: 0.5rem;
+  transition: color 0.2s;
+}
+
+.clearReplyBtn:hover {
+  color: var(--text-primary);
+}
+
 .composer {
   display: flex;
   gap: 0.75rem;

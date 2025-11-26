@@ -13,8 +13,20 @@ export const ChatProvider = ({ children }) => {
   const [isJoined, setIsJoined] = useState(false);
   const [status, setStatus] = useState({ text: "Connecting...", tone: "info" });
   const [isConnected, setIsConnected] = useState(false);
+  const [repliedToMessage, setRepliedToMessage] = useState(null);
 
   const socketMethodsRef = useRef(null);
+
+  // Show notification when user selects a message to reply to
+  useEffect(() => {
+    if (repliedToMessage) {
+      const preview = repliedToMessage.message.substring(0, 35);
+      setStatus({
+        text: `↩️ Replying to ${repliedToMessage.author}: ${preview}${repliedToMessage.message.length > 35 ? '...' : ''}`,
+        tone: "info"
+      });
+    }
+  }, [repliedToMessage]);
 
 
   const socketHandlers = {
@@ -89,7 +101,17 @@ export const ChatProvider = ({ children }) => {
           setMessages((prev) => [...prev, finalMessage]);
         }
 
-        setStatus({ text: `New message from ${data.author}`, tone: "info" });
+        // Show contextual notification - different for own messages vs others
+        if (data.author === userName) {
+          setStatus({ text: "✅ Message sent", tone: "success" });
+        } else {
+          // Show new message notification like WhatsApp
+          const preview = data.message.substring(0, 40);
+          setStatus({
+            text: `💬 ${data.author}: ${preview}${data.message.length > 40 ? '...' : ''}`,
+            tone: "info"
+          });
+        }
       },
       [userName]
     ),    onRoomHistory: useCallback((history) => {
@@ -130,18 +152,16 @@ export const ChatProvider = ({ children }) => {
           })
         );
 
-        // Show error toast after a delay
+        // Show error notification with emoji
         setTimeout(() => {
           setStatus({
-            text: `Failed to send message: ${error || 'Unknown error'}`,
+            text: `❌ Failed to send: ${error || 'Unknown error'}`,
             tone: 'error',
           });
         }, 100);
       }
       // For 'sent' status, we wait for onReceiveMessage to come back
-    }, []),
-
-    onTranslationError: useCallback((msg) => {
+    }, []),    onTranslationError: useCallback((msg) => {
       console.error("Translation error:", msg);
 
       setStatus({ text: `Translation error: ${msg}`, tone: "error" });
@@ -198,6 +218,21 @@ export const ChatProvider = ({ children }) => {
         status: 'pending', // Add status field
       };
 
+      // Add replyTo data if replying to a message
+      if (repliedToMessage) {
+        data.replyTo = {
+          msgId: repliedToMessage.msgId,
+          author: repliedToMessage.author,
+          message: repliedToMessage.message,
+        };
+
+        // Show notification that message was sent as a reply
+        setStatus({
+          text: `📝 Replied to ${repliedToMessage.author}`,
+          tone: "info"
+        });
+      }
+
       console.log('📤 Sending message with pending status:', data);
 
       // ADD TO UI instantly with pending status
@@ -208,10 +243,15 @@ export const ChatProvider = ({ children }) => {
         return updated;
       });
 
+      // Clear reply selection after sending
+      if (repliedToMessage) {
+        setRepliedToMessage(null);
+      }
+
       // SEND TO SERVER
       socketMethodsRef.current.sendMessage(data);
     },
-    [userName, room, lang, isConnected]
+    [userName, room, lang, isConnected, repliedToMessage]
   );
 
   const retryMessage = useCallback(
@@ -284,6 +324,7 @@ export const ChatProvider = ({ children }) => {
     users,
     status,
     isConnected,
+    repliedToMessage,
 
     joinChatRoom,
     sendChatMessage,
@@ -294,6 +335,8 @@ export const ChatProvider = ({ children }) => {
     setStatus,
 
     getSocket: socketMethods.getSocket,
+    setRepliedToMessage,
+    clearReply: () => setRepliedToMessage(null),
   };
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>;

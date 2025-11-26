@@ -15,6 +15,7 @@ function MessageBubble({ message }) {
   const [reactions, setReactions] = useState(message.reactions || {});
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
+  const longPressTimer = useRef(null);
 
   // Listen for reaction updates from socket
   useEffect(() => {
@@ -33,6 +34,16 @@ function MessageBubble({ message }) {
       socket.off('reaction_update', handleReactionUpdate);
     };
   }, [getSocket, message.msgId]);
+
+    // Cleanup long press timer on unmount
+  useEffect(() => {
+    const timer = longPressTimer.current;
+    return () => {
+      if (timer) {
+        clearTimeout(timer);
+      }
+    };
+  }, []);
 
   const getStatusIcon = () => {
     switch (message.status) {
@@ -59,14 +70,40 @@ function MessageBubble({ message }) {
     setRepliedToMessage(message);
   };
 
-  // Swipe gesture detection for mobile
+  // Improved swipe gesture detection
   const handleTouchStart = (e) => {
+    if (e.touches.length !== 1) return; // Only handle single touch
+
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
-    setSwiped(false);
+
+    // Long press detection (500ms)
+    longPressTimer.current = setTimeout(() => {
+      if (!isOwn) {
+        setRepliedToMessage(message);
+        // Trigger haptic feedback on mobile
+        if (navigator.vibrate) {
+          navigator.vibrate(50);
+        }
+      }
+    }, 500);
+  };
+
+  const handleTouchMove = () => {
+    // Cancel long press if user starts moving
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
   };
 
   const handleTouchEnd = (e) => {
+    // Clear long press timer
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+
     if (!touchStartX.current || !touchStartY.current) return;
 
     const touchEndX = e.changedTouches[0].clientX;
@@ -74,21 +111,33 @@ function MessageBubble({ message }) {
 
     const diffX = touchStartX.current - touchEndX;
     const diffY = touchStartY.current - touchEndY;
+    const distance = Math.sqrt(diffX * diffX + diffY * diffY);
+
+    // Require minimum distance for swipe (not a tap)
+    if (distance < 20) {
+      touchStartX.current = 0;
+      touchStartY.current = 0;
+      return;
+    }
 
     // Detect left swipe (diffX > 0) or right swipe (diffX < 0)
     // Only trigger if swipe is more horizontal than vertical
-    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 50) {
+    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 30) {
       // Left swipe: show reply button
-      if (diffX > 0 && !isOwn) {
+      if (diffX > 0 && !isOwn && !swiped) {
         setShowReplyBtn(true);
         setSwiped(true);
       }
       // Right swipe: hide reply button
-      else if (diffX < 0 && showReplyBtn) {
+      else if (diffX < 0 && swiped) {
         setShowReplyBtn(false);
-        setSwiped(true);
+        setSwiped(false);
       }
     }
+
+    // Reset touch tracking
+    touchStartX.current = 0;
+    touchStartY.current = 0;
   };
 
   const handleReplyClick = () => {
@@ -124,6 +173,7 @@ function MessageBubble({ message }) {
       className={`${styles.bubble} ${isOwn ? styles.me : ''} ${swiped ? styles.swiped : ''}`}
       onDoubleClick={handleDoubleClick}
       onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       style={{ position: 'relative' }}
     >

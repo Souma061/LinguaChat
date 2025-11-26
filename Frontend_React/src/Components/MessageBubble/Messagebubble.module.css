@@ -7,7 +7,10 @@
   word-wrap: break-word;
   word-break: break-word;
   animation: slideIn 0.2s ease-out;
-  transition: background-color 0.3s ease, margin-right 0.3s ease;
+  transition: all 0.3s ease;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .bubble.me {

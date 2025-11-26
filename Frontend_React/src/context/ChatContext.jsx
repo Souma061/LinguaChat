@@ -36,7 +36,6 @@ export const ChatProvider = ({ children }) => {
   const socketHandlers = {
     onConnect: useCallback(
       () => {
-        console.log("Connected to server");
         setIsConnected(true);
 
         // Rejoin on refresh/reconnect
@@ -52,7 +51,6 @@ export const ChatProvider = ({ children }) => {
     ),
 
     onDisconnect: useCallback(() => {
-      console.log("Disconnected from server");
       setIsConnected(false);
       setStatus({
         text: "Disconnected. Attempting to reconnect...",
@@ -61,7 +59,6 @@ export const ChatProvider = ({ children }) => {
     }, []),
 
     onReconnectAttempt: useCallback(() => {
-      console.log("Reconnecting...");
       setStatus({ text: "Reconnecting to server...", tone: "info" });
     }, []),
 
@@ -76,7 +73,6 @@ export const ChatProvider = ({ children }) => {
 
     onReceiveMessage: useCallback(
       (data) => {
-        console.log("📨 Received Message from server:", data);
 
         const finalMessage = {
           ...data,
@@ -91,13 +87,11 @@ export const ChatProvider = ({ children }) => {
 
             if (existingIndex !== -1) {
               // Update existing message with server version, keeping status as 'sent'
-              console.log(`  🔄 Updating message ${data.msgId} to 'sent' (received from server)`);
               const updated = [...prev];
               updated[existingIndex] = finalMessage;
               return updated;
             } else {
               // New message from self, add it with sent status
-              console.log(`  ➕ New message ${data.msgId} from self, received from server with status: "sent"`);
               return [...prev, finalMessage];
             }
           });
@@ -135,17 +129,15 @@ export const ChatProvider = ({ children }) => {
     }, []),
 
     onRoomUsers: useCallback((userList) => {
-      console.log("Room users:", userList);
       setUsers(userList);
     }, []),
 
     onMessageStatus: useCallback((statusData) => {
       const { msgId, status, error } = statusData;
-      console.log(`✅ Server confirmed message ${msgId} status: ${status}`);
 
       // Only update status if it's an error, otherwise wait for onReceiveMessage
       if (status === 'failed') {
-        console.log(`  ❌ Message ${msgId} failed to save`);
+
 
         setMessages((prev) =>
           prev.map((msg) => {
@@ -239,13 +231,13 @@ export const ChatProvider = ({ children }) => {
         });
       }
 
-      console.log('📤 Sending message with pending status:', data);
+
 
       // ADD TO UI instantly with pending status
       setMessages((prev) => {
-        console.log('📝 Adding pending message to state');
+
         const updated = [...prev, data];
-        console.log('📝 Messages after add:', updated.map(m => ({ msgId: m.msgId, status: m.status })));
+
         return updated;
       });
 

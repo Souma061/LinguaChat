@@ -226,7 +226,7 @@ io.on('connection', (socket) => {
         replyTo: data.replyTo || null,
       });
 
-      console.log(`Message ${msgId} saved successfully`, savedMessage._id);
+
 
       // Emit status confirmation to the sender using socket.id
       socket.emit('message_status', {

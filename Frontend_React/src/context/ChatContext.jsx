@@ -21,10 +21,14 @@ export const ChatProvider = ({ children }) => {
   useEffect(() => {
     if (repliedToMessage) {
       const preview = repliedToMessage.message.substring(0, 35);
-      setStatus({
-        text: `↩️ Replying to ${repliedToMessage.author}: ${preview}${repliedToMessage.message.length > 35 ? '...' : ''}`,
-        tone: "info"
-      });
+      // Use setTimeout to avoid cascading renders
+      const timer = setTimeout(() => {
+        setStatus({
+          text: `↩️ Replying to ${repliedToMessage.author}: ${preview}${repliedToMessage.message.length > 35 ? '...' : ''}`,
+          tone: "info"
+        });
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [repliedToMessage]);
 
@@ -161,7 +165,9 @@ export const ChatProvider = ({ children }) => {
         }, 100);
       }
       // For 'sent' status, we wait for onReceiveMessage to come back
-    }, []),    onTranslationError: useCallback((msg) => {
+    }, []),
+
+    onTranslationError: useCallback((msg) => {
       console.error("Translation error:", msg);
 
       setStatus({ text: `Translation error: ${msg}`, tone: "error" });

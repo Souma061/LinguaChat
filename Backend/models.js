@@ -22,6 +22,11 @@ const messageSchema = new mongoose.Schema({
     author: String,
     message: String,
   },
+  reactions: {
+    type: Map,
+    of: [String],
+    default: {}
+  },
   createdAt: {
     type: Date,
     default: Date.now,

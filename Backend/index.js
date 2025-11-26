@@ -148,11 +148,21 @@ io.on('connection', (socket) => {
             }
           }
 
+          // Convert reactions Map to object
+          const reactionsObj = {};
+          if (entry.reactions) {
+            for (const [emoji, users] of Object.entries(entry.reactions)) {
+              reactionsObj[emoji] = users;
+            }
+          }
+
           return {
             author: entry.author,
             message: entry.translations[targetLang] ?? entry.original,
             msgId: entry.msgId,
             time: entry.createdAt ? new Date(entry.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '',
+            reactions: reactionsObj,
+            replyTo: entry.replyTo || null,
           };
         });
 
@@ -286,9 +296,77 @@ io.on('connection', (socket) => {
           msgId: msgId,
           lang: data.targetLang || 'en',
           replyTo: data.replyTo || null,
+          reactions: {},
         });
       });
     });
+  });
+
+  socket.on('add_reaction', async (data) => {
+    const { msgId, emoji, username, room } = data;
+
+    try {
+      // Find the message by msgId
+      const message = await Message.findOne({ msgId, room });
+
+      if (!message) {
+        socket.emit('reaction_error', { msgId, error: 'Message not found' });
+        return;
+      }
+
+      // Initialize reactions object if it doesn't exist
+      if (!message.reactions) {
+        message.reactions = {};
+      }
+
+      // Get current reactions for this emoji
+      const reactions = message.reactions.get(emoji) || [];
+
+      // Remove user from any other emoji reaction (one emoji per user)
+      for (const [existingEmoji, users] of message.reactions.entries()) {
+        const index = users.indexOf(username);
+        if (index > -1 && existingEmoji !== emoji) {
+          users.splice(index, 1);
+          if (users.length === 0) {
+            message.reactions.delete(existingEmoji);
+          }
+        }
+      }
+
+      // Add or toggle the reaction
+      if (reactions.includes(username)) {
+        // Remove reaction if already exists
+        const index = reactions.indexOf(username);
+        reactions.splice(index, 1);
+        if (reactions.length === 0) {
+          message.reactions.delete(emoji);
+        } else {
+          message.reactions.set(emoji, reactions);
+        }
+      } else {
+        // Add new reaction
+        reactions.push(username);
+        message.reactions.set(emoji, reactions);
+      }
+
+      // Save to database
+      await message.save();
+
+      // Convert Map to object for emission
+      const reactionsObj = {};
+      for (const [key, value] of message.reactions.entries()) {
+        reactionsObj[key] = value;
+      }
+
+      // Broadcast reaction update to all users in the room
+      io.to(room).emit('reaction_update', {
+        msgId,
+        reactions: reactionsObj,
+      });
+    } catch (error) {
+      console.error('Error adding reaction:', error);
+      socket.emit('reaction_error', { msgId, error: error.message });
+    }
   });
 });
 

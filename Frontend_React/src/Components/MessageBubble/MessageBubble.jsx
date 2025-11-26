@@ -1,16 +1,38 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useChatContext } from "../../hooks/useChatContext";
 import styles from "./Messagebubble.module.css";
 
+const EMOJI_OPTIONS = ["👍", "❤️", "😂", "😮", "😢", "🔥", "🎉", "✨"];
+
 function MessageBubble({ message }) {
-  const { userName, retryMessage, setRepliedToMessage } = useChatContext();   // ✅ correct key from provider
+  const { userName, retryMessage, setRepliedToMessage, getSocket, room } = useChatContext();   // ✅ correct key from provider
   const isOwn = message.author === userName; // ✅ correct ownership check
   const isSystem = message.type === "system";
 
   const [showReplyBtn, setShowReplyBtn] = useState(false);
   const [swiped, setSwiped] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [reactions, setReactions] = useState(message.reactions || {});
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
+
+  // Listen for reaction updates from socket
+  useEffect(() => {
+    const socket = getSocket?.();
+    if (!socket) return;
+
+    const handleReactionUpdate = (data) => {
+      if (data.msgId === message.msgId) {
+        setReactions(data.reactions);
+      }
+    };
+
+    socket.on('reaction_update', handleReactionUpdate);
+
+    return () => {
+      socket.off('reaction_update', handleReactionUpdate);
+    };
+  }, [getSocket, message.msgId]);
 
   const getStatusIcon = () => {
     switch (message.status) {
@@ -75,7 +97,21 @@ function MessageBubble({ message }) {
     setSwiped(false);
   };
 
-  if (isSystem) {
+  const handleEmojiSelect = (emoji) => {
+    const socket = getSocket?.();
+    if (!socket || !message.msgId) return;
+
+    // Emit reaction to backend
+    socket.emit('add_reaction', {
+      msgId: message.msgId,
+      emoji,
+      username: userName,
+      room: room || 'default',
+    });
+
+    // Close emoji picker
+    setShowEmojiPicker(false);
+  };  if (isSystem) {
     return (
       <div className={styles.systemMessage}>
         {message.message}
@@ -138,6 +174,48 @@ function MessageBubble({ message }) {
         {message.original && message.original !== message.message && (
           <div className={styles.originalText}>
             📝 {message.original}
+          </div>
+        )}
+      </div>
+
+      {/* Emoji Reactions */}
+      <div className={styles.reactionsContainer}>
+        {Object.entries(reactions).map(([emoji, users]) => {
+          const userCount = Array.isArray(users) ? users.length : 1;
+          const usersList = Array.isArray(users) ? users.join(', ') : users;
+          const isCurrentUserReacted = Array.isArray(users) && users.includes(userName);
+
+          return (
+            <button
+              key={emoji}
+              className={`${styles.reactionBtn} ${isCurrentUserReacted ? styles.userReacted : ''}`}
+              onClick={() => handleEmojiSelect(emoji)}
+              title={`${usersList}`}
+            >
+              {emoji} <span className={styles.reactionCount}>{userCount}</span>
+            </button>
+          );
+        })}
+
+        <button
+          className={styles.emojiPickerBtn}
+          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+          title="Add reaction"
+        >
+          😊
+        </button>
+
+        {showEmojiPicker && (
+          <div className={styles.emojiPicker}>
+            {EMOJI_OPTIONS.map((emoji) => (
+              <button
+                key={emoji}
+                className={styles.emojiOption}
+                onClick={() => handleEmojiSelect(emoji)}
+              >
+                {emoji}
+              </button>
+            ))}
           </div>
         )}
       </div>

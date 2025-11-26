@@ -6,6 +6,8 @@ function MessageBubble({ message }) {
   const isOwn = message.author === userName; // ✅ correct ownership check
   const isSystem = message.type === "system";
 
+  console.log('MessageBubble rendered:', message.msgId, 'status:', message.status, 'isOwn:', isOwn);
+
   const getStatusIcon = () => {
     switch (message.status) {
       case 'pending':

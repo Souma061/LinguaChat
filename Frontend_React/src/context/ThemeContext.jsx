@@ -7,7 +7,6 @@ const THEME_MODES = {
   DARK: "dark",
   SYSTEM: "system",
 };
-
 export const ThemeProvider = ({ children }) => {
   const [themeMode, setThemeMode] = useState(() => {
     // Get saved theme from localStorage
@@ -53,7 +52,6 @@ export const ThemeProvider = ({ children }) => {
     effectiveTheme:
       themeMode === THEME_MODES.SYSTEM ? systemPreference : themeMode,
   };
-
   return (
     <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
   );

@@ -8,10 +8,12 @@ function Statusbanner() {
   useEffect(() => {
     if (!status || !status.text) return;
 
-    // Auto-dismiss after 3 seconds
+    // Auto-dismiss after different times based on tone
+    const duration = status.tone === 'error' ? 5000 : 3000;
+
     const timer = setTimeout(() => {
       setStatus(null);
-    }, 3000);
+    }, duration);
 
     return () => clearTimeout(timer);
   }, [status, setStatus]);

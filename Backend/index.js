@@ -151,7 +151,8 @@ io.on('connection', (socket) => {
           return {
             author: entry.author,
             message: entry.translations[targetLang] ?? entry.original,
-            time: entry.time,
+            msgId: entry.msgId,
+            time: entry.createdAt ? new Date(entry.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '',
           };
         });
 
@@ -193,33 +194,43 @@ io.on('connection', (socket) => {
     const msgId = data.msgId || `${data.author}-${Date.now()}`;
 
     const roomSockets = io.sockets.adapter.rooms.get(room);
-    if (!roomSockets) return;
+    if (!roomSockets) {
+      console.warn(`Room ${room} not found`);
+      socket.emit('message_status', {
+        msgId,
+        status: 'failed',
+        error: 'Room not found',
+      });
+      return;
+    }
 
     try {
-      // Save to MongoDB
-      await Message.create({
+      // Save to MongoDB (don't save time as it's a formatted string, use createdAt instead)
+      const savedMessage = await Message.create({
         room,
         author: data.author,
         original: data.message,
         translations: {},
         sourceLocale,
         msgId,
-        time: data.time,
       });
 
-      // Emit status confirmation to the sender
-      io.to(data.senderSocketId || socket.id).emit('message_status', {
+      console.log(`Message ${msgId} saved successfully`, savedMessage._id);
+
+      // Emit status confirmation to the sender using socket.id
+      socket.emit('message_status', {
         msgId,
         status: 'sent',
       });
     } catch (error) {
-      console.error('Error saving message:', error);
+      console.error(`Error saving message ${msgId}:`, error.message, error.code);
       // Emit failed status to sender
-      io.to(data.senderSocketId || socket.id).emit('message_status', {
+      socket.emit('message_status', {
         msgId,
         status: 'failed',
-        error: 'Failed to save message',
+        error: error.message || 'Failed to save message',
       });
+      return;
     }
 
     // Group recipients by language for efficient translation

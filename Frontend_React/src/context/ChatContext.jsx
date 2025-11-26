@@ -60,17 +60,30 @@ export const ChatProvider = ({ children }) => {
 
     onReceiveMessage: useCallback(
       (data) => {
-        console.log("Received Message:", data);
+        console.log("📨 Received Message from server:", data);
 
         const finalMessage = {
           ...data,
           time: formatTime(new Date()),
+          status: 'sent', // Message received from server is confirmed sent
         };
 
         if (data.author === userName && data.msgId) {
           setMessages((prev) => {
-            const filtered = prev.filter((msg) => msg.msgId !== data.msgId);
-            return [...filtered, finalMessage];
+            // Find the existing message with this msgId
+            const existingIndex = prev.findIndex((msg) => msg.msgId === data.msgId);
+
+            if (existingIndex !== -1) {
+              // Update existing message with server version, keeping status as 'sent'
+              console.log(`  🔄 Updating message ${data.msgId} to 'sent' (received from server)`);
+              const updated = [...prev];
+              updated[existingIndex] = finalMessage;
+              return updated;
+            } else {
+              // New message from self, add it with sent status
+              console.log(`  ➕ New message ${data.msgId} from self, received from server with status: "sent"`);
+              return [...prev, finalMessage];
+            }
           });
         } else {
           setMessages((prev) => [...prev, finalMessage]);
@@ -79,9 +92,7 @@ export const ChatProvider = ({ children }) => {
         setStatus({ text: `New message from ${data.author}`, tone: "info" });
       },
       [userName]
-    ),
-
-    onRoomHistory: useCallback((history) => {
+    ),    onRoomHistory: useCallback((history) => {
       const formatted = history.map((msg) => ({
         ...msg,
         time: msg.time || formatTime(new Date()),
@@ -104,24 +115,30 @@ export const ChatProvider = ({ children }) => {
 
     onMessageStatus: useCallback((statusData) => {
       const { msgId, status, error } = statusData;
-      console.log(`Message ${msgId} status: ${status}`);
+      console.log(`✅ Server confirmed message ${msgId} status: ${status}`);
 
-      // Update message status in the messages array
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.msgId === msgId
-            ? { ...msg, status, error }
-            : msg
-        )
-      );
-
-      // Show error toast if message failed
+      // Only update status if it's an error, otherwise wait for onReceiveMessage
       if (status === 'failed') {
-        setStatus({
-          text: `Failed to send message: ${error}`,
-          tone: 'error',
-        });
+        console.log(`  ❌ Message ${msgId} failed to save`);
+
+        setMessages((prev) =>
+          prev.map((msg) => {
+            if (msg.msgId === msgId) {
+              return { ...msg, status: 'failed', error };
+            }
+            return msg;
+          })
+        );
+
+        // Show error toast after a delay
+        setTimeout(() => {
+          setStatus({
+            text: `Failed to send message: ${error || 'Unknown error'}`,
+            tone: 'error',
+          });
+        }, 100);
       }
+      // For 'sent' status, we wait for onReceiveMessage to come back
     }, []),
 
     onTranslationError: useCallback((msg) => {
@@ -181,8 +198,15 @@ export const ChatProvider = ({ children }) => {
         status: 'pending', // Add status field
       };
 
+      console.log('📤 Sending message with pending status:', data);
+
       // ADD TO UI instantly with pending status
-      setMessages((prev) => [...prev, data]);
+      setMessages((prev) => {
+        console.log('📝 Adding pending message to state');
+        const updated = [...prev, data];
+        console.log('📝 Messages after add:', updated.map(m => ({ msgId: m.msgId, status: m.status })));
+        return updated;
+      });
 
       // SEND TO SERVER
       socketMethodsRef.current.sendMessage(data);

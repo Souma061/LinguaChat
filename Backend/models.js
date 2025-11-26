@@ -14,11 +14,9 @@ const messageSchema = new mongoose.Schema({
     default: {}
   },
   sourceLocale: String,
-  msgID: {
-    type:String,
-    unique: true,
+  msgId: {
+    type: String,
   },
-  time: Date,
   createdAt: {
     type: Date,
     default: Date.now,
@@ -26,8 +24,7 @@ const messageSchema = new mongoose.Schema({
   },
 });
 
-//index for efficient room history retrieval
-
+// Index for efficient room history retrieval
 messageSchema.index({room: 1, createdAt: -1});
 
 export const Message = mongoose.model("Message", messageSchema);

@@ -23,6 +23,7 @@ function ChatPanel() {
           <h2>LinguaChat 💬</h2>
           {room && <span className={styles.roomPill}>Room: {room}</span>}
         </div>
+        <div className={styles.headerTip}>💡 Double click to reply</div>
       </header>
 
       <p className={styles.powered}>
@@ -42,6 +43,9 @@ function ChatPanel() {
                 <li>🌐 Others will see it translated to their language</li>
                 <li>👥 Share the room link to invite friends</li>
                 <li>🔄 You can change your language anytime from the sidebar</li>
+                <li>↩️ <strong>Reply:</strong> Swipe left on a message or long-press to reply</li>
+                <li>😊 <strong>React:</strong> Click the emoji button to add reactions</li>
+                <li>🔗 <strong>Jump:</strong> Click a reply quote to jump to the original message</li>
               </ul>
             </div>
           </div>

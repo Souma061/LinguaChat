@@ -197,6 +197,40 @@
   transform: translateY(-50%) scale(0.95);
 }
 
+/* Reply hint badge - shown on hover for desktop */
+.replyHint {
+  position: absolute;
+  top: -8px;
+  right: 8px;
+  font-size: 1.2rem;
+  opacity: 0;
+  transition: all 0.3s ease;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.bubble:hover .replyHint {
+  opacity: 0.7;
+  animation: bounce 0.6s ease-in-out;
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* Hide hint on mobile */
+@media (max-width: 768px) {
+  .replyHint {
+    display: none;
+  }
+}
+
 @keyframes slideInFromRight {
   from {
     opacity: 0;

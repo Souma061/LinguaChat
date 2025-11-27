@@ -211,6 +211,13 @@ function MessageBubble({ message }) {
         </button>
       )}
 
+      {/* Desktop hover hint for reply */}
+      {!isOwn && (
+        <div className={styles.replyHint} title="Double click to reply">
+          ↩️
+        </div>
+      )}
+
       <div className={styles.meta}>
         <span className={styles.author}>{message.author}</span>
 

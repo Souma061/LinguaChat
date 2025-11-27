@@ -29,7 +29,13 @@
   margin: 0;
   font-size: 1.5rem;
   color: var(--text-primary);
-  font-weight: 600;
+}
+
+.headerTip {
+  font-size: 0.85rem;
+  white-space: nowrap;
+  color: var(--text-secondary);
+  opacity: 0.7;
 }
 
 .roomPill {
@@ -48,8 +54,72 @@
   font-size: 0.8rem;
   color: var(--text-secondary);
   background: var(--bg-secondary);
-  flex-shrink: 0;
+  border-bottom: 1px solid var(--border-color);
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.powered a {
+  color: var(--accent-color);
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.powered a:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.helpIcon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
+.helpContent {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.helpContent strong {
+  font-weight: 600;
+}
+
+.helpList {
+  margin: 0.35rem 0 0 1.5rem;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8rem;
+  opacity: 0.95;
+}
+
+.helpList li {
+  margin: 0.15rem 0;
+}
+
+.helpList strong {
+  font-weight: 600;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 480px) {
+  .helpBanner {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .helpList {
+    margin: 0.25rem 0 0 1.25rem;
+  }
 }
 
 .powered a {

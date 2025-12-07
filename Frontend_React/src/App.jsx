@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import './App.css';
 import ChatPanel from "./Components/ChatPanel/ChatPanel";
 import LoginPanel from "./Components/LoginPanel/LoginPanel";
@@ -9,6 +10,11 @@ import { useChatContext } from "./hooks/useChatContext";
 
 function AppContent() {
   const { isJoined } = useChatContext();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
 
   return (
     <>
@@ -18,8 +24,8 @@ function AppContent() {
           <LoginPanel />
         ) : (
           <>
-            <UserList />
-            <ChatPanel />
+            <UserList isOpen={sidebarOpen} onToggle={toggleSidebar} />
+            <ChatPanel onToggleSidebar={toggleSidebar} sidebarOpen={sidebarOpen} />
           </>
         )}
       </div>

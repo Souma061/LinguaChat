@@ -4,7 +4,7 @@ import Composer from "../Composer/Composer";
 import MessageBubble from "../MessageBubble/MessageBubble";
 import styles from "./Chatpanel.module.css";
 
-function ChatPanel() {
+function ChatPanel({ onToggleSidebar, sidebarOpen }) {
   const { messages, room } = useChatContext();
   const messagesEndRef = useRef(null);
 
@@ -13,13 +13,21 @@ function ChatPanel() {
   };
   useEffect(() => {
     scrollTobottom();
-  },[messages]);
+  }, [messages]);
 
 
   return (
     <main className={styles.chatPanel}>
       <header className={styles.header}>
         <div className={styles.headerLeft}>
+          <button
+            className={styles.hamburger}
+            onClick={onToggleSidebar}
+            title={sidebarOpen ? "Close sidebar" : "Open sidebar"}
+            aria-label="Toggle sidebar"
+          >
+            {sidebarOpen ? '✕' : '☰'}
+          </button>
           <h2>LinguaChat 💬</h2>
           {room && <span className={styles.roomPill}>Room: {room}</span>}
         </div>
@@ -43,7 +51,7 @@ function ChatPanel() {
                 <li>🌐 Others will see it translated to their language</li>
                 <li>👥 Share the room link to invite friends</li>
                 <li>🔄 You can change your language anytime from the sidebar</li>
-                <li>↩️ <strong>Reply:</strong> Swipe left on a message or long-press to reply</li>
+                <li>↩️ <strong>Reply:</strong> Double tap on a message or long-press to reply</li>
                 <li>😊 <strong>React:</strong> Click the emoji button to add reactions</li>
                 <li>🔗 <strong>Jump:</strong> Click a reply quote to jump to the original message</li>
               </ul>

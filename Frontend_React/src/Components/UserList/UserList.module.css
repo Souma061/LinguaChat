@@ -1,16 +1,33 @@
 /* ========== DESKTOP VIEW ========== */
 .userListDesktop {
-  width: 100%;
-  max-width: 320px;
+  width: 320px;
   background: var(--bg-secondary);
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  border-left: 1px solid var(--border-color);
+  border-right: 1px solid var(--border-color);
   overflow-y: auto;
+  overflow-x: hidden;
   flex-shrink: 0;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
+  transition: width 0.3s ease, padding 0.3s ease, border 0.3s ease;
+  border-left: none;
+}
+
+.userListDesktop.open {
+  width: 320px;
+  padding: 1.5rem;
+  opacity: 1;
+  border-right: 1px solid var(--border-color);
+}
+
+.userListDesktop.closed {
+  width: 0;
+  padding: 0;
+  opacity: 0;
+  pointer-events: none;
+  border-right: none;
+  overflow: hidden;
 }
 
 /* ========== MOBILE - HIDDEN BY DEFAULT ========== */

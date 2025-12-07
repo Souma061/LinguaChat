@@ -4,7 +4,7 @@ import { generateShareLink } from "../../utils/helper";
 import ThemeToggler from "../ThemeToggler/ThemeToggler";
 import styles from "./UserList.module.css";
 
-function UserList() {
+function UserList({ isOpen, onToggle }) {
   const { users, userName, room, lang, changeLanguage } = useChatContext();
   const shareLink = generateShareLink(room, userName);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -15,7 +15,7 @@ function UserList() {
   return (
     <>
       {/* Desktop View */}
-      <aside className={styles.userListDesktop}>
+      <aside className={`${styles.userListDesktop} ${isOpen ? styles.open : styles.closed}`}>
         <div className={styles.languageSelector}>
           <label htmlFor="langSelect">Your Language:</label>
           <select

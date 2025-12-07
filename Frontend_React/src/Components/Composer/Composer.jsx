@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useChatContext } from "../../hooks/useChatContext";
 import { detectSourceLanguage } from "../../utils/helper";
 import styles from "./Composer.module.css";
@@ -6,6 +6,17 @@ import styles from "./Composer.module.css";
 function Composer() {
   const { sendChatMessage, isConnected, repliedToMessage, clearReply } = useChatContext();
   const [message, setMessage] = useState("");
+  const textareaRef = useRef(null);
+
+  // Auto-expand textarea height based on content
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      const newHeight = Math.min(textarea.scrollHeight, 120); // Max height: 120px
+      textarea.style.height = newHeight + 'px';
+    }
+  }, [message]);
 
   const handleSendMessage = () => {
     const trimmed = message.trim();
@@ -15,6 +26,10 @@ function Composer() {
     sendChatMessage(trimmed, sourceLang);
 
     setMessage("");
+    // Reset textarea height after sending
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -42,9 +57,9 @@ function Composer() {
       )}
 
       <div className={styles.composer}>
-        <input
-          type="text"
-          placeholder={isConnected ? "Type your message in any language... (Enter to send)" : "Connecting to chat..."}
+        <textarea
+          ref={textareaRef}
+          placeholder={isConnected ? "Type your message in any language... (Enter to send, Shift+Enter for new line)" : "Connecting to chat..."}
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -52,6 +67,7 @@ function Composer() {
           className={styles.input}
           maxLength={500}
           aria-label="Message input"
+          rows={1}
         />
         <button
           onClick={handleSendMessage}

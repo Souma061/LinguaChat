@@ -1,5 +1,5 @@
-import type  { Request, Response } from "express";
-import {z} from "zod";
+import type { Request, Response } from "express";
+import { z } from "zod";
 import * as authService from "../services/auth.services";
 
 const registerSchema = z.object({
@@ -15,7 +15,7 @@ const loginSchema = z.object({
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const {username, email, password} = registerSchema.parse(req.body);
+    const { username, email, password } = registerSchema.parse(req.body);
     const result = await authService.registerUser(username, email, password);
     res.status(201).json(result);
   } catch (error) {
@@ -25,7 +25,7 @@ export const register = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
   try {
-    const {username, password} = loginSchema.parse(req.body);
+    const { username, password } = loginSchema.parse(req.body);
     const result = await authService.loginUser(username, password);
     res.status(200).json(result);
 

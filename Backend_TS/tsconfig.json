@@ -4,11 +4,15 @@
     // File Layout
     "rootDir": "./src",
     "outDir": "./dist",
+    // Module Resolution
+    "moduleResolution": "nodenext",
+    "module": "nodenext",
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
     "target": "es2020",
     "types": [
-      "node"
+      "node",
+      "jest"
     ],
     // For nodejs:
     // "lib": ["esnext"],
@@ -38,5 +42,13 @@
     "skipLibCheck": true,
     "esModuleInterop": true,
     "skipDefaultLibCheck": true,
-  }
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "tests"
+  ]
 }

@@ -1,8 +1,8 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import type { IUser } from '../models/user.model.js';
-import User from '../models/user.model.js';
-import UserSession from '../models/userSession.model.js';
+import type { IUser } from '../models/user.model.ts';
+import User from '../models/user.model.ts';
+import UserSession from '../models/userSession.model.ts';
 
 interface AuthService {
   user: {

@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
-import * as authService from "../services/auth.services";
+import * as authService from "../services/auth.services.ts";
 
 const getDeviceInfo = (req: Request): { device: string; ip: string } => {
   const userAgent = req.get('user-agent') || 'Unknown Device';

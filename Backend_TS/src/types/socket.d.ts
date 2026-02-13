@@ -14,6 +14,7 @@ export interface ClientToServerInterface {
       message: string;
     };
   }) => void;
+  create_room: (data: { name: string; mode: 'Global' | 'Native' }) => void;
   typing_start: (data: { room: string; author: string }) => void;
   // typing_stop: (data: {room: string; author: string}) => void;
   // leave_room: (data: {room: string; author: string}) => void;
@@ -29,6 +30,7 @@ export interface ServerToClientInterface {
     time: string;
     msgId: string;
     lang: string;
+    translations?: Record<string, string>;
     replyTo?: {
       msgId: string;
       author: string;
@@ -40,6 +42,8 @@ export interface ServerToClientInterface {
   room_history: (data: any[]) => void;
   error_event: (data: { message: string }) => void;
   user_joined: (data: { message: string }) => void;
+  room_info: (data: { name: string; mode: 'Global' | 'Native'; isAdmin: boolean }) => void;
+  room_created: (data: { name: string }) => void;
 }
 
 // data stored in socket instance

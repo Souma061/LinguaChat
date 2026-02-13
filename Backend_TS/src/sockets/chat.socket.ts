@@ -1,5 +1,6 @@
 import { Server } from "socket.io";
 import * as chatService from "../services/chat.service.ts";
+import * as roomService from "../services/rom.service.ts";
 import type { ClientToServerInterface, ServerToClientInterface, SocketData } from "../types/socket.d.ts";
 
 export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerToClientInterface, {}, SocketData>) => {
@@ -12,6 +13,15 @@ export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerT
       socket.data.room = data.room;
       socket.data.lang = data.lang;
       console.log(`User ${socket.data.username} joined room ${data.room} with language ${data.lang}`);
+
+      const roomInfo = await roomService.getRoomByName(data.room);
+      if (roomInfo) {
+        socket.emit("room_info", {
+          name: roomInfo.name,
+          mode: roomInfo.mode,
+          isAdmin: false, // temp
+        })
+      }
 
       // Fetch and send last 50 messages of the room
       try {
@@ -27,54 +37,92 @@ export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerT
       });
     });
 
-    socket.on("send_message", async (data) => {
+    socket.on("create_room", async (data) => {
       try {
-        const messageData: Parameters<typeof chatService.saveMessage>[0] = {
-          room: data.room,
-          author: data.author,
-          message: data.message,
-          sourceLang: data.sourceLocale,
-          msgId: data.msgId,
-        };
+        const fakeUserId = "64b8f0c2f1a2b3c4d5e6f7af"; // Replace with actual user ID from auth
 
-        if (data.replyTo) {
-          messageData.replyTo = data.replyTo;
-        }
+        const normalizedMode = String(data.mode).toLowerCase() === "native" ? "Native" : "Global";
+        await roomService.createRoom(
+          data.name,
+          fakeUserId,
+          normalizedMode
+        );
+        socket.emit("room_created", { name: data.name });
 
-        const savedMessage = await chatService.saveMessage(messageData);
-
-        const messagePayload: {
-          author: string;
-          message: string;
-          original: string;
-          time: string;
-          msgId: string;
-          lang: string;
-          reactions: Record<string, any>;
-          replyTo?: {
-            msgId: string;
-            author: string;
-            message: string;
-          };
-        } = {
-          author: savedMessage.author,
-          message: savedMessage.original,
-          original: savedMessage.original,
-          time: savedMessage.createdAt.toISOString(),
-          msgId: savedMessage.msgId,
-          lang: savedMessage.sourceLocale,
-          reactions: {},
-        };
-
-        if (savedMessage.replyTo) {
-          messagePayload.replyTo = savedMessage.replyTo;
-        }
-
-        io.to(data.room).emit("receive_message", messagePayload);
       } catch (error) {
-        console.error("Error saving message:", error);
+        socket.emit("error_event", { message: error instanceof Error ? error.message : "Failed to create room" });
       }
+    })
+
+    // socket.on("send_message", async (data) => {
+    //   try {
+    //     const messageData: Parameters<typeof chatService.saveMessage>[0] = {
+    //       room: data.room,
+    //       author: data.author,
+    //       message: data.message,
+    //       sourceLang: data.sourceLocale,
+    //       msgId: data.msgId,
+    //     };
+
+    //     if (data.replyTo) {
+    //       messageData.replyTo = data.replyTo;
+    //     }
+
+    //     const savedMessage = await chatService.saveMessage(messageData);
+
+    //     const messagePayload: {
+    //       author: string;
+    //       message: string;
+    //       original: string;
+    //       time: string;
+    //       msgId: string;
+    //       lang: string;
+    //       reactions: Record<string, any>;
+    //       replyTo?: {
+    //         msgId: string;
+    //         author: string;
+    //         message: string;
+    //       };
+    //     } = {
+    //       author: savedMessage.author,
+    //       message: savedMessage.original,
+    //       original: savedMessage.original,
+    //       time: savedMessage.createdAt.toISOString(),
+    //       msgId: savedMessage.msgId,
+    //       lang: savedMessage.sourceLocale,
+    //       reactions: {},
+    //     };
+
+    //     if (savedMessage.replyTo) {
+    //       messagePayload.replyTo = savedMessage.replyTo;
+    //     }
+
+    //     io.to(data.room).emit("receive_message", messagePayload);
+    //   } catch (error) {
+    //     console.error("Error saving message:", error);
+    //   }
+    // });
+
+    socket.on("send_message", async (data) => {
+      const savedMessage = await chatService.saveMessage(data);
+
+      const translations = savedMessage.translations instanceof Map
+        ? Object.fromEntries(savedMessage.translations)
+        : (savedMessage.translations ?? {});
+
+      io.to(data.room).emit("receive_message", {
+        author: savedMessage.author,
+        message: savedMessage.original, // Default to original
+        original: savedMessage.original,
+        time: savedMessage.createdAt.toISOString(),
+        msgId: savedMessage.msgId,
+        lang: savedMessage.sourceLocale,
+        translations,
+        ...(savedMessage.replyTo ? { replyTo: savedMessage.replyTo } : {}),
+        reactions: {},
+      });
     });
+
 
     socket.on("disconnect", () => {
       console.log(`User Disconnected ${socket.id}`);

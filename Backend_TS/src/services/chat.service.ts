@@ -1,46 +1,43 @@
 import Message from "../models/message.model.ts";
+import { Room } from "../models/room.model.ts";
+import * as translationService from "./translation.service.ts";
 
 export const saveMessage = async (data: {
   room: string;
   author: string;
   message: string;
-  sourceLang: string;
+  sourceLocale: string;
   msgId: string;
   replyTo?: { msgId: string; author: string; message: string };
 }) => {
-  try {
-    // 1. Define which languages we support (You can make this dynamic later)
-    const supportedLanguages = ['en', 'es', 'fr', 'hi', 'bn']; // English, Spanish, French, Hindi, Bengali
+  const roomSettings = await Room.findOne({ name: data.room });
+  const isGlobalMode = roomSettings ? roomSettings.mode === 'Global' : true;
+  let translationMap: Map<string, string> = new Map();
 
-    // 2. Create translation map (placeholder for now - you can implement actual translation later)
-    const translationMap = new Map<string, string>();
-    // Add the original message for the source language
-    translationMap.set(data.sourceLang, data.message);
-    // TODO: Implement actual translation service
-    // For now, just set the same message for all languages
-    supportedLanguages.forEach(lang => {
-      if (lang !== data.sourceLang) {
-        translationMap.set(lang, data.message); // Placeholder - implement translation
-      }
-    });
 
-    // 3. Create the message with translations
-    const newMessage = await Message.create({
-      room: data.room,
-      author: data.author,
-      original: data.message,
-      sourceLocale: data.sourceLang,
-      msgId: data.msgId,
-      translated: translationMap,
-      ...(data.replyTo && { replyTo: data.replyTo })
-    });
+  if (isGlobalMode) {
+    const supportedLanguages = ['en', 'es', 'fr', 'hi', 'bn', 'de', 'ja'];
 
-    return newMessage;
-  } catch (error) {
-    console.error("❌ Error saving message:", error);
-    throw error;
+    translationMap = await translationService.translateText(
+      data.message,
+      data.sourceLocale,
+      supportedLanguages
+    );
   }
+
+  const newMessage = await Message.create({
+    room: data.room,
+    author: data.author,
+    original: data.message,
+    sourceLocale: data.sourceLocale,
+    msgId: data.msgId,
+    translations: translationMap,
+    ...(data.replyTo ? { replyTo: data.replyTo } : {})
+  });
+
+  return newMessage;
 };
+
 
 
 export const getRoomHistory = async (room: string,) => {

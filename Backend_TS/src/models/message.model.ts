@@ -1,12 +1,11 @@
-import mongoose, {Document, Schema} from "mongoose";
-import type { required } from "zod/v4/mini";
+import mongoose, { Document, Schema } from "mongoose";
 
 
 export interface IMessage extends Document {
   room: string;
   author: string;
   original: string;
-  translated: Map<string, string>;
+  translations: Map<string, string>;
   sourceLocale: string;
   msgId: string;
   createdAt: Date;
@@ -18,7 +17,7 @@ export interface IMessage extends Document {
 }
 
 
-const MessageSchema : Schema = new Schema({
+const MessageSchema: Schema<IMessage> = new Schema({
   room: {
     type: String,
     required: true,
@@ -32,8 +31,8 @@ const MessageSchema : Schema = new Schema({
     type: String,
     required: true,
   },
-  translated:{
-    type:Map,
+  translations: {
+    type: Map,
     of: String,
     default: {},
   },
@@ -52,7 +51,7 @@ const MessageSchema : Schema = new Schema({
     author: String,
     message: String,
   },
-},{
+}, {
   timestamps: true,
 });
 

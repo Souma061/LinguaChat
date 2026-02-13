@@ -224,3 +224,7 @@ const generateToken = (user: IUser): string => {
     }
   );
 }
+
+export function translateText(message: string, sourceLang: string, supportedLanguages: string[]) {
+  throw new Error("Function not implemented.");
+}

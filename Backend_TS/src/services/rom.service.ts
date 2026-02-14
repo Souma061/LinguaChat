@@ -12,6 +12,8 @@ export const createRoom = async (
   const newRoom = await Room.create({
     name,
     owner: ownerId,
+    admins: [ownerId],
+    members: [ownerId],
     mode,
     isPublic: true,
   });

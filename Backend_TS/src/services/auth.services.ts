@@ -181,7 +181,10 @@ const createSession = async (userId: any, device: string, ip: string): Promise<{
 }
 
 export const logoutSession = async (userId: string, sessionId: string): Promise<{ message: string }> => {
-  const result = await UserSession.findByIdAndDelete(sessionId);
+  const result = await UserSession.findOneAndDelete({
+    _id: sessionId,
+    userId,
+  });
   if (!result) {
     throw new Error('Session not found');
   }

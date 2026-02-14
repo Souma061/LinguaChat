@@ -5,6 +5,7 @@ import app from "./app.ts";
 import { connectDB } from "./config/db.ts";
 import { initializeChatSocket } from "./sockets/chat.socket.ts";
 import type { ClientToServerInterface, ServerToClientInterface, SocketData } from "./types/socket.d.ts";
+import { socketAuthMiddleware } from "./middlewares/socketAuth.middleware.ts";
 
 dotenv.config();
 
@@ -18,8 +19,10 @@ const io = new Server<ClientToServerInterface, ServerToClientInterface, {}, Sock
     methods: ["GET", "POST"],
   },
 });
+io.use(socketAuthMiddleware);
 
 initializeChatSocket(io);
+
 
 const startServer = async () => {
   try {

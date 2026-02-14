@@ -1,5 +1,4 @@
 import dotenv from 'dotenv';
-import mongoose from 'mongoose';
 import request from 'supertest';
 import app from '../src/app';
 import User from '../src/models/user.model';
@@ -13,17 +12,10 @@ describe('Auth Routes', () => {
   let sessionId: string;
   let userId: string;
 
-  beforeAll(async () => {
-    // Connect to test database
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/lingo-test';
-    await mongoose.connect(mongoUri);
-  });
-
   afterAll(async () => {
     // Cleanup and disconnect
     await User.deleteMany({});
     await UserSession.deleteMany({});
-    await mongoose.disconnect();
   });
 
   afterEach(async () => {

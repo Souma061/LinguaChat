@@ -52,4 +52,5 @@ export interface SocketData {
   username: string;
   lang: string;
   room: string;
+  userId?: string;
 }

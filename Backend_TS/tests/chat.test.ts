@@ -1,11 +1,14 @@
 import dotenv from 'dotenv';
 import { createServer } from 'http';
-import mongoose from 'mongoose';
+import jwt from 'jsonwebtoken';
 import { Server } from 'socket.io';
 import { Socket as ClientSocket, io as ioClient } from 'socket.io-client';
 
 import app from '../src/app';
+import { socketAuthMiddleware } from '../src/middlewares/socketAuth.middleware';
 import Message from '../src/models/message.model';
+import { Room } from '../src/models/room.model';
+import User from '../src/models/user.model';
 import { initializeChatSocket } from '../src/sockets/chat.socket';
 import type { ClientToServerInterface, ServerToClientInterface } from '../src/types/socket.d';
 
@@ -14,11 +17,13 @@ dotenv.config();
 describe('Chat Message Test', () => {
   let httpServer: any;
   let io: Server;
-  let serverSocket: any;
   let clientSocket1: ClientSocket<ServerToClientInterface, ClientToServerInterface>;
   let clientSocket2: ClientSocket<ServerToClientInterface, ClientToServerInterface>;
   let port: number;
 
+
+  let token1: string;
+  let token2: string;
   // Your test message
   const testMessage = {
     room: "global",
@@ -29,10 +34,6 @@ describe('Chat Message Test', () => {
   };
 
   beforeAll(async () => {
-    // Connect to test database
-    const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/lingo-test';
-    await mongoose.connect(mongoUri);
-
     // Create HTTP server and Socket.IO instance
     httpServer = createServer(app);
     io = new Server(httpServer, {
@@ -42,8 +43,42 @@ describe('Chat Message Test', () => {
       },
     });
 
+    // Match production auth path
+    io.use(socketAuthMiddleware);
+
     // Initialize chat socket handlers
     initializeChatSocket(io);
+
+    // Create test users + a Native-mode room to avoid external translation calls
+    const user1 = await User.create({
+      username: 'socketuser1',
+      email: 'socketuser1@example.com',
+      password: 'x',
+      role: 'user',
+    });
+    const user2 = await User.create({
+      username: 'socketuser2',
+      email: 'socketuser2@example.com',
+      password: 'x',
+      role: 'user',
+    });
+
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET is required for socket auth tests');
+    }
+    token1 = jwt.sign({ id: user1._id.toString(), role: user1.role }, process.env.JWT_SECRET);
+    token2 = jwt.sign({ id: user2._id.toString(), role: user2.role }, process.env.JWT_SECRET);
+
+    await Room.deleteMany({ name: 'global' });
+    await Room.create({
+      name: 'global',
+      owner: user1._id,
+      admins: [user1._id],
+      members: [user1._id, user2._id],
+      mode: 'Native',
+      isPublic: true,
+      description: '',
+    });
 
     // Start server on random port
     await new Promise<void>((resolve) => {
@@ -53,11 +88,13 @@ describe('Chat Message Test', () => {
         resolve();
       });
     });
-  });
+  }, 60000);
 
   afterAll(async () => {
     // Cleanup
     await Message.deleteMany({});
+    await Room.deleteMany({});
+    await User.deleteMany({});
 
     if (clientSocket1?.connected) {
       clientSocket1.disconnect();
@@ -72,7 +109,6 @@ describe('Chat Message Test', () => {
       });
     }
 
-    await mongoose.disconnect();
   });
 
   beforeEach(async () => {
@@ -95,12 +131,14 @@ describe('Chat Message Test', () => {
     // Create client connections
     clientSocket1 = ioClient(`http://localhost:${port}`, {
       forceNew: true,
-      transports: ['websocket']
+      transports: ['websocket'],
+      auth: { token: token1 },
     });
 
     clientSocket2 = ioClient(`http://localhost:${port}`, {
       forceNew: true,
-      transports: ['websocket']
+      transports: ['websocket'],
+      auth: { token: token2 },
     });
 
     // Wait for both clients to connect
@@ -159,7 +197,8 @@ describe('Chat Message Test', () => {
     console.log('==================');
 
     expect(receivedMessage).toBeDefined();
-    expect(receivedMessage.author).toBe(testMessage.author);
+    // Author is server-controlled (derived from authenticated socket user)
+    expect(receivedMessage.author).toBe('socketuser1');
     expect(receivedMessage.message).toBe(testMessage.message);
     expect(receivedMessage.msgId).toBe(testMessage.msgId);
     expect(receivedMessage.original).toBe(testMessage.message);
@@ -178,7 +217,7 @@ describe('Chat Message Test', () => {
     const savedMessage = await Message.findOne({ msgId: testMessage.msgId });
     expect(savedMessage).toBeTruthy();
     expect(savedMessage?.original).toBe(testMessage.message);
-    expect(savedMessage?.author).toBe(testMessage.author);
+    expect(savedMessage?.author).toBe('socketuser1');
     expect(savedMessage?.room).toBe(testMessage.room);
     expect(savedMessage?.sourceLocale).toBe(testMessage.sourceLocale);
 
@@ -202,12 +241,14 @@ describe('Chat Message Test', () => {
     // Create client connections
     clientSocket1 = ioClient(`http://localhost:${port}`, {
       forceNew: true,
-      transports: ['websocket']
+      transports: ['websocket'],
+      auth: { token: token1 },
     });
 
     clientSocket2 = ioClient(`http://localhost:${port}`, {
       forceNew: true,
-      transports: ['websocket']
+      transports: ['websocket'],
+      auth: { token: token2 },
     });
 
     // Wait for connections and join room
@@ -265,12 +306,14 @@ describe('Chat Message Test', () => {
     // Create client connections
     clientSocket1 = ioClient(`http://localhost:${port}`, {
       forceNew: true,
-      transports: ['websocket']
+      transports: ['websocket'],
+      auth: { token: token1 },
     });
 
     clientSocket2 = ioClient(`http://localhost:${port}`, {
       forceNew: true,
-      transports: ['websocket']
+      transports: ['websocket'],
+      auth: { token: token2 },
     });
 
     // Wait for connections and join room
@@ -321,7 +364,7 @@ describe('Chat Message Test', () => {
       const receivedMsg = receivedMessages.find(msg => msg.msgId === originalMsg.msgId);
       expect(receivedMsg).toBeDefined();
       expect(receivedMsg.message).toBe(originalMsg.message);
-      expect(receivedMsg.author).toBe(originalMsg.author);
+      expect(receivedMsg.author).toBe('socketuser1');
     });
 
     console.log('✅ All sequential messages handled correctly');

@@ -13,17 +13,17 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
-          {/* Public Routes */}
+
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
 
-          {/* Protected Routes (Must be logged in) */}
+
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<HomePage />} />
             <Route path="/room/:roomId" element={<RoomPage />} />
           </Route>
 
-          {/* Catch all - Redirect to Home */}
+         
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

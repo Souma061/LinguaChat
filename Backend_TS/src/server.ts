@@ -10,13 +10,18 @@ import { socketAuthMiddleware } from "./middlewares/socketAuth.middleware.ts";
 dotenv.config();
 
 const PORT = process.env.PORT || 5000;
+const corsOrigins = (process.env.CORS_ORIGINS || "http://localhost:5173")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 const httpServer = createServer(app);
 
 const io = new Server<ClientToServerInterface, ServerToClientInterface, {}, SocketData>(httpServer, {
   cors: {
-    origin: "*",
+    origin: corsOrigins,
     methods: ["GET", "POST"],
+    credentials: true,
   },
 });
 io.use(socketAuthMiddleware);

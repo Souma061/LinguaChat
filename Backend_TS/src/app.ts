@@ -8,6 +8,10 @@ import roomRoutes from "./routes/room.routes.ts";
 const app = express();
 
 const isTestEnv = process.env.NODE_ENV === "test";
+const corsOrigins = (process.env.CORS_ORIGINS || "http://localhost:5173")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 if (!isTestEnv) {
   app.set("trust proxy", 1);
@@ -21,7 +25,12 @@ if (!isTestEnv) {
   );
 }
 
-app.use(cors());
+app.use(cors({
+  origin: corsOrigins,
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+}))
 app.use(express.json());
 
 

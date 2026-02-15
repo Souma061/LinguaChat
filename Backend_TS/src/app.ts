@@ -25,6 +25,24 @@ const corsOrigins = [...new Set([...envOrigins, ...defaultOrigins])].filter(Bool
 
 console.log("Allowed CORS Origins (App):", corsOrigins);
 
+// CORS MUST be first — before rate limiter or anything else
+app.use(cors({
+  origin: corsOrigins,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+}));
+
+// Explicitly handle preflight for all routes
+app.options("*", cors({
+  origin: corsOrigins,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true,
+}));
+
+app.use(express.json());
+
 if (!isTestEnv) {
   app.set("trust proxy", 1);
   app.use(
@@ -36,14 +54,6 @@ if (!isTestEnv) {
     })
   );
 }
-
-app.use(cors({
-  origin: corsOrigins,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
-}))
-app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/rooms", roomRoutes);

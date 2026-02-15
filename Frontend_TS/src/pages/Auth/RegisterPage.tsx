@@ -18,6 +18,29 @@ const RegisterPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    // Strict Input Validation
+    if (!username.trim() || !email.trim() || !password.trim()) {
+      setError('All fields are required.');
+      return;
+    }
+
+    if (username.length < 6) {
+      setError('Username must be at least 6 characters long.');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -76,7 +99,7 @@ const RegisterPage = () => {
                 <input
                   type="text"
                   required
-                  minLength={3}
+                  minLength={6}
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-slate-600 rounded-xl leading-5 bg-white dark:bg-slate-700/50 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition-all duration-200 shadow-sm hover:border-indigo-400"

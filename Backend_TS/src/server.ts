@@ -8,7 +8,7 @@ import type { ClientToServerInterface, ServerToClientInterface, SocketData } fro
 import { socketAuthMiddleware } from "./middlewares/socketAuth.middleware.ts";
 
 dotenv.config();
-
+ 
 const PORT = process.env.PORT || 5000;
 const corsOrigins = (process.env.CORS_ORIGINS || "http://localhost:5173")
   .split(",")

@@ -15,7 +15,7 @@ export interface IRoom extends Document {
 }
 
 
-const RommSchema = new mongoose.Schema<IRoom>({
+const RoomSchema = new mongoose.Schema<IRoom>({
   name: {
     type: String,
     required: true,
@@ -59,4 +59,4 @@ const RommSchema = new mongoose.Schema<IRoom>({
   timestamps: true,
 });
 
-export const Room = mongoose.model<IRoom>('Room', RommSchema);
+export const Room = mongoose.model<IRoom>('Room', RoomSchema);

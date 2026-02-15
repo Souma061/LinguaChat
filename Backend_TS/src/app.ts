@@ -23,7 +23,7 @@ const envOrigins = process.env.CORS_ORIGINS
 
 const corsOrigins = [...new Set([...envOrigins, ...defaultOrigins])].filter(Boolean);
 
-console.log("Allowed CORS Origins (App):", corsOrigins);
+
 
 // CORS MUST be first — before rate limiter or anything else
 app.use(cors({

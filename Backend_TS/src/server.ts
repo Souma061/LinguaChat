@@ -25,7 +25,7 @@ const envOrigins = process.env.CORS_ORIGINS
 
 const corsOrigins = [...new Set([...envOrigins, ...defaultOrigins])].filter(Boolean);
 
-console.log("Allowed CORS Origins (Server):", corsOrigins);
+
 
 const httpServer = createServer(app);
 

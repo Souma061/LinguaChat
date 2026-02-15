@@ -77,12 +77,11 @@ export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerT
         socket.emit("room_info", {
           name: roomInfo.name,
           mode: roomInfo.mode,
-          isAdmin: isAdmin, // Determine if the user is an admin based on room info and socket data
+          isAdmin,
         })
       }
 
-      // Fetch and send last 50 messages of the room
-      // Mirrors old Backend: translate missing entries on-the-fly for the joining user's language
+      // Fetch and send last 50 messages, translating on-the-fly if needed
       try {
         const messages = await chatService.getRoomHistory(data.room);
         const userLang = socket.data.lang || 'en';
@@ -95,7 +94,7 @@ export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerT
             ? Object.fromEntries(m.reactions)
             : (m.reactions ?? {});
 
-          // On-the-fly translation if the user's language is missing (old Backend approach)
+          // On-the-fly translation if the user's language is missing
           if (!translations[userLang] && m.original) {
             try {
               const translated = await translationService.translateSingle(
@@ -136,7 +135,7 @@ export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerT
       io.to(data.room).emit("room_users", occupants);
 
       io.to(data.room).emit("user_joined", {
-        message: "Anonymous", // temp
+        message: "Anonymous",
       });
     });
 
@@ -234,7 +233,7 @@ export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerT
         io.to(room).emit("room_info", {
           name: updated.name,
           mode: updated.mode,
-          isAdmin: true, // admins will compute true client-side from join info; keep payload shape consistent
+          isAdmin: true,
         });
       } catch (error) {
         socket.emit("error_event", {
@@ -243,54 +242,6 @@ export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerT
       }
     });
 
-    // socket.on("send_message", async (data) => {
-    //   try {
-    //     const messageData: Parameters<typeof chatService.saveMessage>[0] = {
-    //       room: data.room,
-    //       author: data.author,
-    //       message: data.message,
-    //       sourceLang: data.sourceLocale,
-    //       msgId: data.msgId,
-    //     };
-
-    //     if (data.replyTo) {
-    //       messageData.replyTo = data.replyTo;
-    //     }
-
-    //     const savedMessage = await chatService.saveMessage(messageData);
-
-    //     const messagePayload: {
-    //       author: string;
-    //       message: string;
-    //       original: string;
-    //       time: string;
-    //       msgId: string;
-    //       lang: string;
-    //       reactions: Record<string, any>;
-    //       replyTo?: {
-    //         msgId: string;
-    //         author: string;
-    //         message: string;
-    //       };
-    //     } = {
-    //       author: savedMessage.author,
-    //       message: savedMessage.original,
-    //       original: savedMessage.original,
-    //       time: savedMessage.createdAt.toISOString(),
-    //       msgId: savedMessage.msgId,
-    //       lang: savedMessage.sourceLocale,
-    //       reactions: {},
-    //     };
-
-    //     if (savedMessage.replyTo) {
-    //       messagePayload.replyTo = savedMessage.replyTo;
-    //     }
-
-    //     io.to(data.room).emit("receive_message", messagePayload);
-    //   } catch (error) {
-    //     console.error("Error saving message:", error);
-    //   }
-    // });
 
     socket.on("send_message", async (data) => {
       try {

@@ -22,7 +22,7 @@ class AuthError extends Error {
 export const socketAuthMiddleware = (socket: Socket, next: (err?: any) => void) => {
   const token = socket.handshake.auth.token || socket.handshake.headers["authorization"]?.split(" ")[1];
 
-  console.log(`[Socket] 🔒 Authenticating socket ${socket.id}...`);
+
 
   if (!token) {
     console.error(`[Socket] ❌ No token provided for socket ${socket.id}`);
@@ -36,9 +36,8 @@ export const socketAuthMiddleware = (socket: Socket, next: (err?: any) => void) 
     }
     const decoded = jwt.verify(token, process.env.JWT_SECRET) as tokenPayload;
     (socket.data as SocketData).userId = decoded.id;
-    (socket.data as SocketData).username = "Fetching..."; // temp, replace with actual username if available
+    (socket.data as SocketData).username = "";
 
-    console.log(`[Socket] ✅ User ${decoded.id} authenticated on socket ${socket.id}`);
     next();
 
   } catch (error) {

@@ -8,7 +8,7 @@ import roomRoutes from "./routes/room.routes.ts";
 const app = express();
 
 const isTestEnv = process.env.NODE_ENV === "test";
-const corsOrigins = (process.env.CORS_ORIGINS || "http://localhost:5173,http://127.0.0.1:5173")
+const corsOrigins = (process.env.CORS_ORIGINS || "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://localhost:5175,https://linguachat-frmz.onrender.com,https://lingua-chat.vercel.app")
   .split(",")
   .map((origin) => origin.trim())
   .filter(Boolean);

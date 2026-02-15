@@ -1,236 +1,366 @@
-﻿# 🚀 LinguaChat
+﻿# 🌐 LinguaChat
 
-### _Translate together in real time — chat across languages effortlessly._
+### _Break language barriers — chat across languages in real time._
 
-![Node](https://img.shields.io/badge/Node.js-18%2B-green)
-![Express](https://img.shields.io/badge/Express.js-black)
-![Socket.IO](https://img.shields.io/badge/Socket.IO-Real--time-blue)
-![Lingo.dev](https://img.shields.io/badge/Lingo.dev-AI%20Translation-purple)
-![Render](https://img.shields.io/badge/Deploy-Render-success)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6?logo=typescript&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61dafb?logo=react&logoColor=black)
+![Node.js](https://img.shields.io/badge/Node.js-22-339933?logo=nodedotjs&logoColor=white)
+![Socket.IO](https://img.shields.io/badge/Socket.IO-4.8-010101?logo=socketdotio&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47a248?logo=mongodb&logoColor=white)
+![Lingo.dev](https://img.shields.io/badge/Lingo.dev-AI%20Translation-7c3aed)
+![Vercel](https://img.shields.io/badge/Frontend-Vercel-000?logo=vercel&logoColor=white)
+![Render](https://img.shields.io/badge/Backend-Render-46e3b7?logo=render&logoColor=white)
+
+---
+
+## 🔗 Live Demo
+
+| Service  | URL                                                                                  |
+| -------- | ------------------------------------------------------------------------------------ |
+| Frontend | **[lingua-chat.vercel.app](https://lingua-chat.vercel.app)**                         |
+| Backend  | **[linguachat-frmz.onrender.com](https://linguachat-frmz.onrender.com/healthcheck)** |
+
+> Create an account, join or create a room, and start chatting — messages are translated automatically for every participant.
 
 ---
 
 ## 🌍 Overview
 
-**LinguaChat** is a real-time multilingual chat platform. Built with **Node.js**, **Express**, **Socket.IO**, and **Lingo.dev AI Translation**, it enables people speaking different languages to chat in the same room with automatic message translation.
+**LinguaChat** is a full-stack, real-time multilingual chat application. Users speaking different languages can join the same room and communicate effortlessly — every message is automatically translated into each participant's preferred language using the **Lingo.dev AI** translation engine.
+
+Built with a modern TypeScript stack: **React 19 + Vite** on the frontend and **Node.js + Express + Socket.IO** on the backend, backed by **MongoDB Atlas** for persistent storage.
 
 ---
 
 ## ✨ Features
 
-- 🔗 Join rooms or share invite links using `?room=&username=`
-- 🌐 Real-time translation to each user's preferred language
-- 👥 Presence panel with usernames and language tags
-- 🔄 Auto reconnection for stable chat sessions
-- 💾 **Persistent message storage** with MongoDB integration
-- 🔍 **Translation caching** for optimized performance
-- 🕒 **Full message history** with room and timestamp indexing
-- 🛠️ `/health` API route plus automated tests
-- 🎨 Clean WhatsApp-style responsive UI
+### 💬 Core Chat
+
+- **Real-time messaging** via Socket.IO with instant delivery
+- **Automatic translation** to 7 languages (English, Hindi, Bengali, Spanish, French, German, Japanese)
+- **Two-phase message delivery** — original text appears instantly, translations arrive asynchronously
+- **Translation caching** — repeated phrases are served instantly from an in-memory cache
+
+### � Room System
+
+- **Create & join rooms** — public rooms with admin controls
+- **Global / Native mode** — admins can toggle between translated (Global) and untranslated (Native) modes per room
+- **Online presence** — see who's in the room with live user lists and language tags
+- **Room history** — last 50 messages loaded on join with on-the-fly translation for missing languages
+
+### 💅 Rich Chat Experience
+
+- **Emoji picker** — inline emoji selection in the message composer
+- **Message reactions** — react to messages with emojis (toggle on/off)
+- **Reply threads** — reply to specific messages with a preview bar and scroll-to-message navigation
+- **Typing indicators** — see when others are composing a message
+- **Date separators** — messages grouped by Today / Yesterday / date labels
+- **Auto-resize composer** — textarea grows with input, supports Shift+Enter for newlines
+
+### 🔐 Authentication & Security
+
+- **JWT-based auth** with access + refresh tokens
+- **Session management** — view active sessions, logout individual or all sessions
+- **Rate limiting** — per-route and per-socket rate limits to prevent abuse
+- **Input validation** with Zod schemas
+- **Socket authentication middleware** — only authenticated users can connect
+
+### 🌐 Deployment
+
+- **Frontend** deployed on **Vercel** (SPA with client-side routing)
+- **Backend** deployed on **Render** (Node.js Web Service)
+- **Database** on **MongoDB Atlas** (cloud-hosted)
 
 ---
 
 ## 🧰 Tech Stack
 
-**Backend:** Node.js, Express, Socket.IO, Lingo.dev SDK, dotenv
-**Frontend:** React 19, Vite, Socket.IO client, CSS Modules
-**Testing:** Node built-in test runner (`node --test`)
-**Deployment:** Render Web Service
-
-## 🔗 Live Demo
-
-**[Visit LinguaChat Live](https://linguachat-mojs.onrender.com/)**
-
-Try the demo or create your own room to see multilingual chat in action!
+| Layer        | Technologies                                                   |
+| ------------ | -------------------------------------------------------------- |
+| **Frontend** | React 19, TypeScript, Vite 7, Tailwind CSS 4, Socket.IO Client |
+| **Backend**  | Node.js, Express 5, TypeScript, Socket.IO 4, Mongoose          |
+| **AI**       | Lingo.dev SDK — AI-powered translation engine                  |
+| **Database** | MongoDB Atlas with Mongoose ODM                                |
+| **Auth**     | JWT (access + refresh tokens), bcrypt password hashing         |
+| **Testing**  | Jest, Supertest, MongoDB Memory Server                         |
+| **Deploy**   | Vercel (frontend), Render (backend)                            |
 
 ---
 
-## 📁 Folder Structure
+## 📁 Project Structure
 
 ```
 LinguaChat/
 │
-├── Backend/
-│   ├── index.js              (main server & Socket.IO logic)
-│   ├── db.js                 (MongoDB connection & utilities)
-│   ├── models.js             (Mongoose schemas)
-│   ├── constants.js          (configuration constants)
-│   ├── package.json
-│   ├── .env
-│   ├── .env.example
-│   ├── tests/
-│   │   └── health.test.js
-│   └── node_modules/
-│
-├── Frontend_React/
+├── Backend_TS/                    # Node.js + Express + Socket.IO server
 │   ├── src/
-│   │   ├── main.jsx
-│   │   ├── App.jsx
-│   │   ├── App.css
-│   │   ├── index.css
-│   │   ├── Components/
-│   │   │   ├── ChatPanel/
-│   │   │   ├── LoginPanel/
-│   │   │   ├── Composer/
-│   │   │   ├── MessageBubble/
-│   │   │   ├── UserList/
-│   │   │   └── StatusBanner/
-│   │   ├── context/
-│   │   │   └── ChatContext.jsx
-│   │   ├── hooks/
-│   │   │   ├── useSocket.js
-│   │   │   └── useChatContext.js
-│   │   └── utils/
-│   │       └── helper.js
-│   ├── dist/ (production build)
-│   ├── vite.config.js
+│   │   ├── server.ts              # Entry point — HTTP server + Socket.IO setup
+│   │   ├── app.ts                 # Express app — CORS, rate limiting, routes
+│   │   ├── config/
+│   │   │   └── db.ts              # MongoDB connection
+│   │   ├── controllers/
+│   │   │   ├── auth.controller.ts # Register, login, token refresh, sessions
+│   │   │   └── roomControllers.ts # Room CRUD operations
+│   │   ├── middlewares/
+│   │   │   ├── auth.middleware.ts  # JWT authentication for REST routes
+│   │   │   └── socketAuth.middleware.ts  # JWT authentication for sockets
+│   │   ├── models/
+│   │   │   ├── user.model.ts      # User schema (username, email, password, role)
+│   │   │   ├── message.model.ts   # Message schema (translations, reactions, replies)
+│   │   │   ├── room.model.ts      # Room schema (owner, admins, mode)
+│   │   │   └── userSession.model.ts  # Session tracking
+│   │   ├── routes/
+│   │   │   ├── auth.routes.ts     # /api/auth/* endpoints
+│   │   │   └── room.routes.ts     # /api/rooms/* endpoints
+│   │   ├── services/
+│   │   │   ├── auth.services.ts   # Auth business logic
+│   │   │   ├── chat.service.ts    # Message save, translate, history
+│   │   │   ├── rom.service.ts     # Room business logic
+│   │   │   └── translation.service.ts  # Lingo.dev SDK integration + cache
+│   │   ├── sockets/
+│   │   │   └── chat.socket.ts     # All real-time event handlers
+│   │   └── types/
+│   │       └── socket.d.ts        # Socket.IO type definitions
+│   ├── tests/                     # Jest test suites
 │   ├── package.json
-│   └── node_modules/
+│   └── tsconfig.json
 │
-├── assets/
-│   └── screenshots/
-│       ├── Landing.png
-│       ├── Demo_room.png
-│       └── Multilingual_chat.png
+├── Frontend_TS/                   # React 19 + Vite SPA
+│   ├── src/
+│   │   ├── main.tsx               # App entry point
+│   │   ├── App.tsx                # Router setup (login, register, home, room)
+│   │   ├── context/
+│   │   │   ├── AuthContext.tsx     # Auth state + token management
+│   │   │   └── chatContext.tsx     # Socket.IO connection management
+│   │   ├── components/
+│   │   │   ├── MessageBubble.tsx   # Chat message with reactions & replies
+│   │   │   ├── EmojiPicker.tsx     # Emoji selection component
+│   │   │   └── ProtectedRoute.tsx  # Auth guard for protected pages
+│   │   ├── pages/
+│   │   │   ├── Auth/
+│   │   │   │   ├── LoginPage.tsx
+│   │   │   │   └── RegisterPage.tsx
+│   │   │   ├── Dashboard/
+│   │   │   │   └── HomePage.tsx    # Room list, create/join rooms
+│   │   │   └── Chat/
+│   │   │       └── RoomPage.tsx    # Full chat interface
+│   │   ├── services/
+│   │   │   └── api.ts             # Axios instance with auth interceptor
+│   │   └── types/
+│   │       └── socket.ts          # Shared socket event types
+│   ├── vercel.json                # SPA rewrite rules for Vercel
+│   ├── package.json
+│   └── vite.config.ts
 │
 └── README.md
 ```
 
 ---
 
-## 🛠️ Local Setup
+## 🛠️ Local Development
 
-### Development Mode
+### Prerequisites
 
-1. **Install dependencies**
-   ```bash
-   cd Backend
-   npm install
-   cd ../Frontend_React
-   npm install
-   ```
-2. **Configure environment variables** — create `Backend/.env`
-   ```env
-   LINGO_API_KEY="your_api_key_here"
-   PORT=5000
-   MONGODB_URI="mongodb+srv://user:password@cluster.mongodb.net/LinguaChat"
-   ```
-3. **Start Backend** (in `Backend/` directory)
-   ```bash
-   npm run dev
-   ```
-4. **Start Frontend** (in `Frontend_React/` directory, new terminal)
-   ```bash
-   npm run dev
-   ```
-   - Backend runs on `http://localhost:5000`
-   - Frontend dev server on `http://localhost:5173` with Vite proxy to `/socket.io`
+- **Node.js** 18+ (recommended: 22)
+- **MongoDB** — local instance or [MongoDB Atlas](https://www.mongodb.com/atlas) (free tier)
+- **Lingo.dev API Key** — get one at [lingo.dev](https://lingo.dev)
 
-### Production Mode (Build & Deploy)
+### 1. Clone the repository
 
-1. **Build the React app**
-   ```bash
-   cd Frontend_React
-   npm run build
-   ```
-   Creates optimized bundle in `Frontend_React/dist/`
-2. **Start with production backend**
-   ```bash
-   cd Backend
-   NODE_ENV=production npm start
-   ```
-   Backend serves React build from `dist/` on port 5000
+```bash
+git clone https://github.com/Souma061/LinguaChat.git
+cd LinguaChat
+```
+
+### 2. Backend Setup
+
+```bash
+cd Backend_TS
+npm install
+```
+
+Create a `.env` file:
+
+```env
+LINGO_API_KEY=your_lingo_api_key
+PORT=5000
+MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/LinguaChat
+JWT_SECRET=your_jwt_secret
+JWT_REFRESH_SECRET=your_refresh_secret
+CORS_ORIGINS=http://localhost:5173,http://localhost:5174
+```
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+> Backend runs on `http://localhost:5000`
+
+### 3. Frontend Setup
+
+```bash
+cd Frontend_TS
+npm install
+```
+
+Create a `.env` file:
+
+```env
+VITE_BACKEND_URL=http://localhost:5000/api
+VITE_SOCKET_URL=http://localhost:5000
+```
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+> Frontend runs on `http://localhost:5173`
+
+---
+
+## 🧪 Testing
+
+```bash
+cd Backend_TS
+npm test
+```
+
+Tests use **Jest** with **MongoDB Memory Server** for isolated database testing and **Supertest** for HTTP endpoint validation.
 
 ---
 
 ## 🗄️ Database Architecture
 
-### MongoDB Integration
+### Models
 
-LinguaChat uses **MongoDB** with Mongoose ODM for persistent message storage and caching optimization.
+| Model           | Purpose                                             |
+| --------------- | --------------------------------------------------- |
+| **User**        | Username, email, hashed password, role              |
+| **Room**        | Name, owner, admins, members, mode (Global/Native)  |
+| **Message**     | Original text, translations map, reactions, replies |
+| **UserSession** | JWT session tracking for multi-device logout        |
 
-**Key Files:**
+### Message Schema
 
-- `db.js` — Database connection with connection pooling (min: 2, max: 10)
-- `models.js` — Mongoose message schema with optimization indexes
-- `constants.js` — Application constants (DB name, etc.)
-
-**Message Schema:**
-
-```javascript
+```typescript
 {
-  room: String,           // Room identifier (indexed for fast queries)
-  author: String,         // Message sender's username
-  original: String,       // Original untranslated message
-  translations: Map,      // Language-specific translations {langCode: translatedText}
-  sourceLocale: String,   // Source language locale
-  msgID: String,          // Unique message identifier
-  time: Date,             // Message send time
-  createdAt: Date         // Database record creation time (indexed)
+  room: string;           // Room identifier (indexed)
+  author: string;         // Sender's username
+  original: string;       // Original untranslated message
+  translations: Map;      // { langCode: translatedText }
+  sourceLocale: string;   // Detected source language
+  msgId: string;          // Unique message identifier
+  reactions: Map;         // { emoji: [username1, username2] }
+  replyTo?: {             // Optional reply reference
+    msgId: string;
+    author: string;
+    message: string;
+  };
+  createdAt: Date;        // Auto-managed timestamp
 }
 ```
 
-**Indexes:**
+### Indexes
 
-- `room` — Fast room filtering
-- `createdAt` — Time-based sorting
-- Compound `{room, createdAt}` — Efficient room history retrieval
-
-### Features
-
-- ✅ Full message history with translations
-- ✅ Translation result caching for performance
-- ✅ Room-based message organization
-- ✅ Automatic timestamp tracking
-- ✅ Scalable connection pooling
+- `room` — fast room filtering
+- `{ room, createdAt }` — compound index for efficient history retrieval
+- `msgId` — unique constraint for deduplication
 
 ---
 
-## 🧪 Tests
+## 🔄 Translation Architecture
 
-```bash
-npm test
-```
+LinguaChat uses a **two-phase message delivery** pattern for optimal UX:
 
-Verifies the `/health` route responds with `{ "status": "ok" }`.
+1. **Phase 1 — Instant delivery**: Message is saved to MongoDB and broadcast to all room members immediately with the original text.
+2. **Phase 2 — Async translation**: Translations are generated in the background via Lingo.dev SDK, then pushed to all clients via a `translations_ready` socket event.
+
+This ensures messages appear instantly while translations arrive within seconds.
+
+### Supported Languages
+
+| Code | Language |
+| ---- | -------- |
+| `en` | English  |
+| `hi` | Hindi    |
+| `bn` | Bengali  |
+| `es` | Spanish  |
+| `fr` | French   |
+| `de` | German   |
+| `ja` | Japanese |
 
 ---
 
-## ☁️ Deploying to Render
+## ☁️ Deployment
 
-1. Push to the `main` branch.
-2. Create a Render **Web Service** from the GitHub repo:
-   - **Language:** Node
-   - **Root Directory:** `.` (repository root)
-   - **Build Command:**
-     ```bash
-     npm install --prefix Backend && npm install --prefix Frontend_React && npm run build --prefix Frontend_React
-     ```
-   - **Start Command:**
-     ```bash
-     NODE_ENV=production npm start --prefix Backend
-     ```
-3. Configure environment variables:
-   - `LINGO_API_KEY` (your Lingo.dev API key)
-   - `MONGODB_URI` (MongoDB Atlas connection string)
-   - `PORT` (optional, defaults to 5000)
-   - Optional: `LINGO_API_URL` (custom Lingo.dev endpoint)
-4. Deploy 🚀
+### Backend → Render
 
-Render will:
+1. Create a **Web Service** on [Render](https://render.com)
+2. Connect your GitHub repository
+3. Configure:
+   - **Root Directory**: `Backend_TS`
+   - **Build Command**: `npm install && npm run build`
+   - **Start Command**: `npm start`
+4. Add environment variables (`MONGODB_URI`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `LINGO_API_KEY`, `CORS_ORIGINS`)
 
-- Clone your repo
-- Install dependencies for both Backend and Frontend_React
-- Build the React production bundle
-- Start the backend server serving the built React app
+### Frontend → Vercel
 
-**Live URL:** `https://your-service.onrender.com`
+1. Import the repository on [Vercel](https://vercel.com)
+2. Set **Root Directory** to `Frontend_TS`
+3. Add environment variables:
+   - `VITE_BACKEND_URL` = `https://your-backend.onrender.com/api`
+   - `VITE_SOCKET_URL` = `https://your-backend.onrender.com`
+4. Deploy — Vercel auto-detects Vite and builds accordingly
 
-Shareable invite example:
+> **Important**: Add your Vercel domain to `CORS_ORIGINS` in the Render environment variables after deployment.
 
-```
-https://linguachat-mojs.onrender.com?room=demo&username=YourName
-```
+---
+
+## 🔒 API Endpoints
+
+### Authentication
+
+| Method | Endpoint                   | Description            | Auth |
+| ------ | -------------------------- | ---------------------- | ---- |
+| POST   | `/api/auth/register`       | Create a new account   | ❌   |
+| POST   | `/api/auth/login`          | Login & receive tokens | ❌   |
+| POST   | `/api/auth/refresh-token`  | Refresh access token   | ❌   |
+| POST   | `/api/auth/logout-session` | Logout current session | ✅   |
+| POST   | `/api/auth/logout-all`     | Logout all sessions    | ✅   |
+| GET    | `/api/auth/sessions`       | List active sessions   | ✅   |
+| GET    | `/api/auth/profile`        | Get user profile       | ✅   |
+
+### Rooms
+
+| Method | Endpoint     | Description       | Auth |
+| ------ | ------------ | ----------------- | ---- |
+| GET    | `/api/rooms` | List public rooms | ✅   |
+| POST   | `/api/rooms` | Create a new room | ✅   |
+
+### Socket Events
+
+| Event                | Direction       | Description                            |
+| -------------------- | --------------- | -------------------------------------- |
+| `join_Room`          | Client → Server | Join a chat room                       |
+| `send_message`       | Client → Server | Send a message to the room             |
+| `set_language`       | Client → Server | Change preferred language              |
+| `create_room`        | Client → Server | Create a new room                      |
+| `update_room_mode`   | Client → Server | Toggle Global/Native mode (admin only) |
+| `add_reaction`       | Client → Server | React to a message with an emoji       |
+| `typing_start`       | Client → Server | Notify typing started                  |
+| `typing_stop`        | Client → Server | Notify typing stopped                  |
+| `receive_message`    | Server → Client | New message received                   |
+| `translations_ready` | Server → Client | Translations available for a message   |
+| `room_history`       | Server → Client | Room message history on join           |
+| `room_users`         | Server → Client | Updated list of online users           |
+| `room_info`          | Server → Client | Room mode and admin status             |
+| `reaction_update`    | Server → Client | Updated reactions for a message        |
+| `user_typing`        | Server → Client | Typing indicator from another user     |
+| `error_event`        | Server → Client | Error notification                     |
 
 ---
 
@@ -238,28 +368,20 @@ https://linguachat-mojs.onrender.com?room=demo&username=YourName
 
 | Landing Screen                             | Demo Room                                      | Cross-Language Chat                                             |
 | ------------------------------------------ | ---------------------------------------------- | --------------------------------------------------------------- |
-| ![Landing](assets/screenshots/Landing.png) | ![Demo Room](assets/screenshots/Demo_room.png) | ![Multilingual Chat](assets/screenshots/Multillingual_chat.png) |
+| ![Landing](assets/screenshots/Landing.jpg) | ![Demo Room](assets/screenshots/Demo_Room.jpg) | ![Multilingual Chat](assets/screenshots/Multillingual_chat.png) |
 
 ---
 
-## 🚀 Future Improvements
+## 🎥 Video Demo
 
-- Typing indicators and read receipts
-- Message reactions and emoji picker
-- Light/dark theme toggle
-- User authentication and profiles
-- Analytics dashboard for room activity
-- Message search and filtering
-- Voice messages and file sharing
+[![Watch on YouTube](https://img.shields.io/badge/YouTube-Watch%20Demo-red?logo=youtube&logoColor=white)](https://youtu.be/RAg2pKxgBnU)
 
 ---
 
-## 💬 Final Note
+## 📄 License
 
-LinguaChat was built to make global communication effortless. Feel free to fork, extend, or use it as a starting point for your own multilingual chat experience.
+This project is open source under the [ISC License](https://opensource.org/licenses/ISC).
 
-Happy hacking! 🚀
+---
 
-## 📁 Video Demo
-
-https://youtu.be/RAg2pKxgBnU
+_Built with ❤️ for the Lingo.dev Hackathon — making global communication effortless._

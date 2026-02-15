@@ -1,11 +1,4 @@
-import {
-    ArrowLeft,
-    Globe,
-    MoreVertical,
-    Send,
-    Users,
-    X
-} from "lucide-react";
+import { ArrowLeft, Globe, MoreVertical, Send, Users, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { EmojiPicker, EmojiToggleButton } from "../../components/EmojiPicker";
@@ -34,7 +27,8 @@ interface RoomUser {
 }
 
 const RoomPage = () => {
-  const { roomId } = useParams<{ roomId: string }>();
+  const { roomId: rawRoomId } = useParams<{ roomId: string }>();
+  const roomId = rawRoomId ? decodeURIComponent(rawRoomId) : undefined;
   const navigate = useNavigate();
   const { socket, isConnected, connectionError } = useChat();
   const { user } = useAuth();

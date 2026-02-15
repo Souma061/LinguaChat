@@ -18,11 +18,30 @@ export const getPublicRooms = async (req: Request, res: Response) => {
 
 export const getRoomById = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
-    const room = await Room.findById(id)
-      .select("name mode admins members owner createdAt")
-      .populate("owner", "username")
-      .lean();
+    const id = String(req.params.id || "").trim();
+    if (!id) {
+      res.status(400).json({ error: "Room ID or name is required" });
+      return;
+    }
+
+    // Try finding by MongoDB ObjectId first, then by name
+    let room;
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+      room = await Room.findById(id)
+        .select("name mode admins members owner createdAt")
+        .populate("owner", "username")
+        .lean();
+    }
+
+    // If not found by ID, try finding by name (case-insensitive)
+    if (!room) {
+      const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      room = await Room.findOne({ name: { $regex: new RegExp(`^${escaped}$`, 'i') } })
+        .select("name mode admins members owner createdAt")
+        .populate("owner", "username")
+        .lean();
+    }
+
     if (!room) {
       res.status(404).json({ error: "Room not found" });
       return;
@@ -31,6 +50,32 @@ export const getRoomById = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error fetching room by ID:", error);
     res.status(500).json({ error: "Failed to fetch room" });
+  }
+};
+
+export const searchRoomsByName = async (req: Request, res: Response) => {
+  try {
+    const { q } = req.query;
+    if (!q || typeof q !== "string" || q.trim().length < 1) {
+      res.status(400).json({ error: "Search query is required" });
+      return;
+    }
+
+    const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const rooms = await Room.find({
+      isPublic: true,
+      name: { $regex: escaped, $options: "i" },
+    })
+      .select("name mode admins members owner createdAt")
+      .populate("owner", "username")
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean();
+
+    res.status(200).json(rooms);
+  } catch (error) {
+    console.error("Error searching rooms:", error);
+    res.status(500).json({ error: "Failed to search rooms" });
   }
 };
 

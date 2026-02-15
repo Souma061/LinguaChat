@@ -1,22 +1,22 @@
 import {
-  Check,
-  Copy,
-  Crown,
-  Globe,
-  LayoutGrid,
-  Link2,
-  List as ListIcon,
-  LogOut,
-  MessageSquare,
-  Plus,
-  QrCode,
-  Search,
-  Settings,
-  Share2,
-  Shield,
-  Users,
-  X,
-  Zap,
+    Check,
+    Copy,
+    Crown,
+    Globe,
+    LayoutGrid,
+    Link2,
+    List as ListIcon,
+    LogOut,
+    MessageSquare,
+    Plus,
+    QrCode,
+    Search,
+    Settings,
+    Share2,
+    Shield,
+    Users,
+    X,
+    Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -151,12 +151,12 @@ const HomePage = () => {
     socket.emit("create_room", { name: trimmedName, mode: newRoomMode });
   };
 
-  // ── Join room by ID ──
+  // ── Join room by ID or Name ──
   const handleJoinById = async (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmedId = joinRoomId.trim();
-    if (!trimmedId) {
-      setJoinError("Please enter a Room ID");
+    const trimmedInput = joinRoomId.trim();
+    if (!trimmedInput) {
+      setJoinError("Please enter a Room ID or Name");
       return;
     }
 
@@ -164,7 +164,8 @@ const HomePage = () => {
     setIsJoining(true);
 
     try {
-      const res = await api.get(`/rooms/${trimmedId}`);
+      // The backend /:id endpoint now searches by ObjectId first, then by name
+      const res = await api.get(`/rooms/${encodeURIComponent(trimmedInput)}`);
       const room = res.data;
       if (room?.name) {
         setShowJoinModal(false);
@@ -174,7 +175,7 @@ const HomePage = () => {
         setJoinError("Room not found");
       }
     } catch {
-      setJoinError("Room not found. Check the ID and try again.");
+      setJoinError("Room not found. Check the ID or name and try again.");
     } finally {
       setIsJoining(false);
     }
@@ -296,7 +297,7 @@ const HomePage = () => {
 
         {/* Clickable card body */}
         <div
-          onClick={() => navigate(`/room/${room.name}`)}
+          onClick={() => navigate(`/room/${encodeURIComponent(room.name)}`)}
           className="relative z-10 p-6 pb-3 cursor-pointer"
         >
           <div className="flex justify-between items-start mb-4">
@@ -479,7 +480,7 @@ const HomePage = () => {
               className="inline-flex items-center justify-center px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
             >
               <Link2 className="h-4 w-4 mr-2" />
-              Join by ID
+              Join by ID/Name
             </button>
 
             <button
@@ -706,7 +707,7 @@ const HomePage = () => {
             <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 shadow-2xl relative z-10">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                  Join Room by ID
+                  Join Room by ID or Name
                 </h3>
                 <button
                   onClick={() => setShowJoinModal(false)}
@@ -717,19 +718,19 @@ const HomePage = () => {
               </div>
 
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">
-                Paste the Room ID shared with you to join the conversation.
+                Enter the Room ID or room name to join the conversation.
               </p>
 
               <form onSubmit={handleJoinById} className="space-y-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1.5 uppercase tracking-wide">
-                    Room ID
+                    Room ID or Name
                   </label>
                   <input
                     type="text"
                     value={joinRoomId}
                     onChange={(e) => setJoinRoomId(e.target.value)}
-                    placeholder="e.g. 65a1b2c3d4e5f6a7b8c9d0e1"
+                    placeholder="e.g. Multi_Lingual or 65a1b2c3..."
                     className="block w-full rounded-xl border-gray-300 dark:border-gray-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-3 px-4 dark:bg-gray-700 dark:text-white font-mono text-sm"
                   />
                 </div>

@@ -368,7 +368,7 @@ This ensures messages appear instantly while translations arrive within seconds.
 
 | Landing Screen                             | Demo Room                                      | Cross-Language Chat                                             |
 | ------------------------------------------ | ---------------------------------------------- | --------------------------------------------------------------- |
-| ![Landing](assets/screenshots/Landing.jpg) | ![Demo Room](assets/screenshots/Demo_Room.jpg) | ![Multilingual Chat](assets/screenshots/Multillingual_chat.png) |
+| ![Landing](assets/screenshots/Landing.jpg) | ![Demo Room](assets/screenshots/Demo_Room.jpg) | ![Multilingual Chat](assets/screenshots/multilingual.jpg) |
 
 ---
 

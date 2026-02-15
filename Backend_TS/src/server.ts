@@ -10,12 +10,22 @@ import { initializeChatSocket } from "./sockets/chat.socket.ts";
 import type { ClientToServerInterface, ServerToClientInterface, SocketData } from "./types/socket.d.ts";
 
 const PORT = process.env.PORT || 5000;
-const corsOrigins = (process.env.CORS_ORIGINS || "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://localhost:5175,https://linguachat-frmz.onrender.com,https://lingua-chat.vercel.app")
-  .split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean);
+const defaultOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:5174",
+  "http://localhost:5175",
+  "https://linguachat-frmz.onrender.com",
+  "https://lingua-chat.vercel.app"
+];
 
-console.log("Allowed CORS Origins:", corsOrigins);
+const envOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(",").map(o => o.trim())
+  : [];
+
+const corsOrigins = [...new Set([...envOrigins, ...defaultOrigins])].filter(Boolean);
+
+console.log("Allowed CORS Origins (Server):", corsOrigins);
 
 const httpServer = createServer(app);
 

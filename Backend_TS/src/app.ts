@@ -8,10 +8,22 @@ import roomRoutes from "./routes/room.routes.ts";
 const app = express();
 
 const isTestEnv = process.env.NODE_ENV === "test";
-const corsOrigins = (process.env.CORS_ORIGINS || "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5174,http://localhost:5175,https://linguachat-frmz.onrender.com,https://lingua-chat.vercel.app")
-  .split(",")
-  .map((origin) => origin.trim())
-  .filter(Boolean);
+const defaultOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "http://localhost:5174",
+  "http://localhost:5175",
+  "https://linguachat-frmz.onrender.com",
+  "https://lingua-chat.vercel.app"
+];
+
+const envOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(",").map(o => o.trim())
+  : [];
+
+const corsOrigins = [...new Set([...envOrigins, ...defaultOrigins])].filter(Boolean);
+
+console.log("Allowed CORS Origins (App):", corsOrigins);
 
 if (!isTestEnv) {
   app.set("trust proxy", 1);

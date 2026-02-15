@@ -1,22 +1,22 @@
 import {
-    Check,
-    Copy,
-    Crown,
-    Globe,
-    LayoutGrid,
-    Link2,
-    List as ListIcon,
-    LogOut,
-    MessageSquare,
-    Plus,
-    QrCode,
-    Search,
-    Settings,
-    Share2,
-    Shield,
-    Users,
-    X,
-    Zap,
+  Check,
+  Copy,
+  Crown,
+  Globe,
+  LayoutGrid,
+  Link2,
+  List as ListIcon,
+  LogOut,
+  MessageSquare,
+  Plus,
+  QrCode,
+  Search,
+  Settings,
+  Share2,
+  Shield,
+  Users,
+  X,
+  Zap,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -51,21 +51,17 @@ const HomePage = () => {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Create Room State
   const [newRoomName, setNewRoomName] = useState("");
   const [newRoomMode, setNewRoomMode] = useState<"Global" | "Native">("Global");
   const [createError, setCreateError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
-  // Share Modal State
   const [shareRoom, setShareRoom] = useState<Room | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  // Manage Room State
   const [manageRoom, setManageRoom] = useState<Room | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Join by ID State
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [joinRoomId, setJoinRoomId] = useState("");
   const [joinError, setJoinError] = useState<string | null>(null);
@@ -75,7 +71,6 @@ const HomePage = () => {
     fetchRooms();
   }, []);
 
-  // Listen for real-time updates
   useEffect(() => {
     if (!socket) return;
     const handleRoomCreated = () => fetchRooms();
@@ -151,7 +146,6 @@ const HomePage = () => {
     socket.emit("create_room", { name: trimmedName, mode: newRoomMode });
   };
 
-  // ── Join room by ID or Name ──
   const handleJoinById = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedInput = joinRoomId.trim();
@@ -164,7 +158,6 @@ const HomePage = () => {
     setIsJoining(true);
 
     try {
-      // The backend /:id endpoint now searches by ObjectId first, then by name
       const res = await api.get(`/rooms/${encodeURIComponent(trimmedInput)}`);
       const room = res.data;
       if (room?.name) {
@@ -181,7 +174,6 @@ const HomePage = () => {
     }
   };
 
-  // ── Update room mode ──
   const handleUpdateMode = async (
     roomId: string,
     newMode: "Global" | "Native",
@@ -203,14 +195,12 @@ const HomePage = () => {
     }
   };
 
-  // ── Copy helper ──
   const copyToClipboard = useCallback((text: string, field: string) => {
     navigator.clipboard.writeText(text);
     setCopiedField(field);
     setTimeout(() => setCopiedField(null), 2000);
   }, []);
 
-  // ── Get owner username ──
   const getOwnerName = useCallback((room: Room): string => {
     if (room.owner && typeof room.owner === "object" && room.owner.username) {
       return room.owner.username;
@@ -218,7 +208,6 @@ const HomePage = () => {
     return "Unknown";
   }, []);
 
-  // ── Check if current user is admin/owner ──
   const getUserRole = useCallback(
     (room: Room): "owner" | "admin" | "member" => {
       if (!user) return "member";
@@ -233,7 +222,6 @@ const HomePage = () => {
     [user],
   );
 
-  // ── Search filter ──
   const filteredRooms = useMemo(() => {
     if (!searchQuery.trim()) return rooms;
     const q = searchQuery.toLowerCase();
@@ -244,12 +232,10 @@ const HomePage = () => {
     );
   }, [rooms, searchQuery]);
 
-  // ── Generate room link ──
   const getRoomLink = useCallback((room: Room) => {
     return `${window.location.origin}/room/${encodeURIComponent(room.name)}`;
   }, []);
 
-  // ── QR Code (using Google Charts API) ──
   const getQrUrl = useCallback(
     (room: Room) => {
       const link = getRoomLink(room);
@@ -257,8 +243,6 @@ const HomePage = () => {
     },
     [getRoomLink],
   );
-
-  // --- SUB-COMPONENTS ---
 
   const RoleBadge = ({ role }: { role: "owner" | "admin" | "member" }) => {
     if (role === "owner") {
@@ -286,7 +270,6 @@ const HomePage = () => {
 
     return (
       <div className="group relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
-        {/* Decorative blob */}
         <div
           className={`absolute top-0 right-0 w-32 h-32 bg-linear-to-br ${
             room.mode === "Global"
@@ -295,7 +278,6 @@ const HomePage = () => {
           } rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110`}
         />
 
-        {/* Clickable card body */}
         <div
           onClick={() => navigate(`/room/${encodeURIComponent(room.name)}`)}
           className="relative z-10 p-6 pb-3 cursor-pointer"
@@ -349,7 +331,6 @@ const HomePage = () => {
           </div>
         </div>
 
-        {/* Card footer with share button */}
         <div className="relative z-10 border-t border-gray-100 dark:border-gray-700 px-6 py-2.5 flex items-center justify-between">
           <span className="text-[11px] text-gray-400 dark:text-gray-500 font-mono truncate max-w-[140px]">
             ID: {room._id}
@@ -398,12 +379,10 @@ const HomePage = () => {
     </div>
   );
 
-  // ── QR ref for potential download ──
   const qrImgRef = useRef<HTMLImageElement>(null);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
-      {/* ── NAVBAR ── */}
       <nav className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md sticky top-0 z-40 border-b border-gray-200 dark:border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
@@ -437,9 +416,7 @@ const HomePage = () => {
         </div>
       </nav>
 
-      {/* ── MAIN ── */}
       <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        {/* Header section */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white tracking-tight">
@@ -451,7 +428,6 @@ const HomePage = () => {
           </div>
 
           <div className="flex items-center gap-3 w-full sm:w-auto">
-            {/* View Toggle */}
             <div className="hidden sm:flex bg-white dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => setViewMode("grid")}
@@ -493,7 +469,6 @@ const HomePage = () => {
           </div>
         </div>
 
-        {/* Search bar */}
         <div className="mb-6">
           <div className="relative max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -507,7 +482,6 @@ const HomePage = () => {
           </div>
         </div>
 
-        {/* Room Grid */}
         {isLoading ? (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -551,9 +525,6 @@ const HomePage = () => {
         )}
       </main>
 
-      {/* ════════════════════════════════════════════ */}
-      {/* ── CREATE ROOM MODAL ── */}
-      {/* ════════════════════════════════════════════ */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div
@@ -659,7 +630,6 @@ const HomePage = () => {
                   </div>
                 </div>
 
-                {/* Admin note */}
                 <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-900/10 rounded-lg border border-amber-200 dark:border-amber-800">
                   <Crown className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
                   <span className="text-xs text-amber-700 dark:text-amber-300">
@@ -694,9 +664,6 @@ const HomePage = () => {
         </div>
       )}
 
-      {/* ════════════════════════════════════════════ */}
-      {/* ── JOIN BY ID MODAL ── */}
-      {/* ════════════════════════════════════════════ */}
       {showJoinModal && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div
@@ -754,9 +721,6 @@ const HomePage = () => {
         </div>
       )}
 
-      {/* ════════════════════════════════════════════ */}
-      {/* ── SHARE MODAL ── */}
-      {/* ════════════════════════════════════════════ */}
       {shareRoom && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div
@@ -765,7 +729,6 @@ const HomePage = () => {
           />
           <div className="flex items-center justify-center min-h-screen px-4">
             <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 shadow-2xl relative z-10">
-              {/* Header */}
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h3 className="text-lg font-bold text-gray-900 dark:text-white">
@@ -783,7 +746,6 @@ const HomePage = () => {
                 </button>
               </div>
 
-              {/* QR Code */}
               <div className="flex justify-center mb-6">
                 <div className="p-4 bg-gray-900 rounded-2xl">
                   <img
@@ -798,9 +760,7 @@ const HomePage = () => {
                 Scan this QR code to join the room
               </p>
 
-              {/* Share options */}
               <div className="space-y-3">
-                {/* Copy Link */}
                 <button
                   type="button"
                   onClick={() =>
@@ -826,7 +786,6 @@ const HomePage = () => {
                   )}
                 </button>
 
-                {/* Copy Room ID */}
                 <button
                   type="button"
                   onClick={() => copyToClipboard(shareRoom._id, "id")}
@@ -850,7 +809,6 @@ const HomePage = () => {
                   )}
                 </button>
 
-                {/* Copy Room Name */}
                 <button
                   type="button"
                   onClick={() => copyToClipboard(shareRoom.name, "name")}
@@ -879,9 +837,6 @@ const HomePage = () => {
         </div>
       )}
 
-      {/* ════════════════════════════════════════════ */}
-      {/* ── MANAGE ROOM MODAL ── */}
-      {/* ════════════════════════════════════════════ */}
       {manageRoom && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div

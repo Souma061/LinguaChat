@@ -4,6 +4,8 @@ import { authenticateJwt } from "../middlewares/auth.middleware.ts";
 
 const router = Router();
 
-router.get("/",authenticateJwt,roomControllers.getPublicRooms);
+router.get("/", authenticateJwt, roomControllers.getPublicRooms);
+router.get("/:id", authenticateJwt, roomControllers.getRoomById);
+router.patch("/:id/mode", authenticateJwt, roomControllers.updateRoomMode);
 
 export default router;

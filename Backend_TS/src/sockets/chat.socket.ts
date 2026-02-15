@@ -2,6 +2,7 @@ import { Server } from "socket.io";
 import User from "../models/user.model.ts";
 import * as chatService from "../services/chat.service.ts";
 import * as roomService from "../services/rom.service.ts";
+import * as translationService from "../services/translation.service.ts";
 import type { ClientToServerInterface, ServerToClientInterface, SocketData } from "../types/socket.d.ts";
 
 type RateEntry = { count: number; resetAt: number };
@@ -37,7 +38,20 @@ export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerT
     socket.data.username = username;
 
 
-    console.log(`User Connected ${socket.id}`);
+
+
+    const roomMembers = (room: string) => {
+      const ids = Array.from(io.sockets.adapter.rooms.get(room) ?? []);
+      return ids.map((id) => {
+        const s = io.sockets.sockets.get(id);
+        return {
+          id,
+          username: String(s?.data?.username ?? 'Anonymous'),
+          lang: String(s?.data?.lang ?? 'en'),
+          status: 'online' as const,
+        };
+      });
+    };
 
     socket.on("join_Room", async (data) => {
       if (hitRateLimit(socket.id, "join_Room", 20, 60_000)) {
@@ -51,8 +65,8 @@ export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerT
       socket.join(data.room);
       socket.data.username = username;
       socket.data.room = data.room;
-      socket.data.lang = data.lang;
-      console.log(`User ${socket.data.username} joined room ${data.room} with language ${data.lang}`);
+      socket.data.lang = typeof data.lang === 'string' && data.lang.trim() ? data.lang : 'en';
+
 
       const roomInfo = await roomService.getRoomByName(data.room);
       const isAdmin = roomInfo?.admins.some(
@@ -68,17 +82,86 @@ export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerT
       }
 
       // Fetch and send last 50 messages of the room
+      // Mirrors old Backend: translate missing entries on-the-fly for the joining user's language
       try {
         const messages = await chatService.getRoomHistory(data.room);
-        socket.emit("room_history", messages);
+        const userLang = socket.data.lang || 'en';
+
+        const translationPromises = messages.map(async (m: any) => {
+          const translations = m.translations instanceof Map
+            ? Object.fromEntries(m.translations)
+            : (m.translations ?? {});
+          const reactions = m.reactions instanceof Map
+            ? Object.fromEntries(m.reactions)
+            : (m.reactions ?? {});
+
+          // On-the-fly translation if the user's language is missing (old Backend approach)
+          if (!translations[userLang] && m.original) {
+            try {
+              const translated = await translationService.translateSingle(
+                m.original,
+                m.sourceLocale ?? 'auto',
+                userLang,
+              );
+              if (translated && translated !== m.original) {
+                translations[userLang] = translated;
+              }
+            } catch (err) {
+              console.error(`[history] On-the-fly translate error for ${m.msgId}:`, err);
+              socket.emit('error_event', { message: 'Translation unavailable. Showing original message.' });
+            }
+          }
+
+          return {
+            author: m.author,
+            message: translations[userLang] ?? m.original,
+            original: m.original,
+            time: (m.createdAt instanceof Date ? m.createdAt.toISOString() : String(m.createdAt ?? '')),
+            msgId: m.msgId,
+            lang: m.sourceLocale ?? 'auto',
+            translations,
+            reactions,
+            ...(m.replyTo ? { replyTo: m.replyTo } : {}),
+          };
+        });
+
+        const payload = await Promise.all(translationPromises);
+        socket.emit("room_history", payload);
       } catch (error) {
         console.error("Error fetching room history:", error);
         socket.emit("error_event", { message: "Failed to fetch room history" });
       }
 
+      const occupants = roomMembers(data.room);
+      io.to(data.room).emit("room_users", occupants);
+
       io.to(data.room).emit("user_joined", {
         message: "Anonymous", // temp
       });
+    });
+
+    socket.on('set_language', async (data) => {
+      try {
+        if (hitRateLimit(socket.id, 'set_language', 30, 60_000)) {
+          throw new Error('Too many language changes; slow down');
+        }
+        if (!data || typeof (data as any).room !== 'string') {
+          throw new Error('Invalid room');
+        }
+        const room = String((data as any).room).trim();
+        const lang = typeof (data as any).lang === 'string' && String((data as any).lang).trim()
+          ? String((data as any).lang).trim()
+          : 'en';
+
+        if (!socket.data.room || socket.data.room !== room) {
+          throw new Error('Join the room before changing language');
+        }
+
+        socket.data.lang = lang;
+        io.to(room).emit('room_users', roomMembers(room));
+      } catch (error) {
+        socket.emit('error_event', { message: error instanceof Error ? error.message : 'Failed to set language' });
+      }
     });
 
     socket.on("create_room", async (data) => {
@@ -109,6 +192,56 @@ export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerT
         socket.emit("error_event", { message: error instanceof Error ? error.message : "Failed to create room" });
       }
     })
+
+    socket.on("update_room_mode", async (data) => {
+      try {
+        if (!socket.data.userId) {
+          throw new Error("Unauthorized");
+        }
+        if (hitRateLimit(socket.id, "update_room_mode", 10, 60_000)) {
+          throw new Error("Too many settings changes; slow down");
+        }
+
+        if (!data || typeof (data as any).room !== "string") {
+          throw new Error("Invalid room");
+        }
+        const room = String((data as any).room).trim();
+        if (!room) {
+          throw new Error("Room is required");
+        }
+        if (!socket.data.room || socket.data.room !== room) {
+          throw new Error("Join the room before changing settings");
+        }
+
+        const modeRaw = String((data as any).mode ?? "").toLowerCase();
+        const nextMode: 'Global' | 'Native' = modeRaw === 'native' ? 'Native' : 'Global';
+
+        const roomInfo = await roomService.getRoomByName(room);
+        if (!roomInfo) {
+          throw new Error("Room not found");
+        }
+
+        const isAdmin = roomInfo?.admins.some(
+          adminId => adminId.toString() === socket.data.userId
+        ) || false;
+
+        if (!isAdmin) {
+          throw new Error("Only admins can change room settings");
+        }
+
+        const updated = await roomService.updateRoomMode(room, nextMode);
+
+        io.to(room).emit("room_info", {
+          name: updated.name,
+          mode: updated.mode,
+          isAdmin: true, // admins will compute true client-side from join info; keep payload shape consistent
+        });
+      } catch (error) {
+        socket.emit("error_event", {
+          message: error instanceof Error ? error.message : "Failed to update room settings",
+        });
+      }
+    });
 
     // socket.on("send_message", async (data) => {
     //   try {
@@ -204,7 +337,8 @@ export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerT
           }
           : undefined;
 
-        const savedMessage = await chatService.saveMessage({
+        // ── STEP 1: Save immediately with empty translations ──
+        const { savedMessage, isGlobalMode } = await chatService.saveMessageFast({
           room,
           author: socket.data.username || "Unknown User",
           message,
@@ -213,33 +347,132 @@ export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerT
           ...(replyTo && replyTo.msgId ? { replyTo } : {}),
         });
 
-        const translations = savedMessage.translations instanceof Map
-          ? Object.fromEntries(savedMessage.translations)
-          : (savedMessage.translations ?? {});
+        // ── STEP 2: Emit to everyone instantly (original text) ──
+        socket.emit('message_status', { msgId: savedMessage.msgId, status: 'sent' });
 
-        io.to(data.room).emit("receive_message", {
+        io.to(room).emit("receive_message", {
           author: savedMessage.author,
-          message: savedMessage.original, // Default to original
+          message: savedMessage.original,
           original: savedMessage.original,
           time: savedMessage.createdAt.toISOString(),
           msgId: savedMessage.msgId,
           lang: savedMessage.sourceLocale,
-          translations,
+          translations: {},
           ...(savedMessage.replyTo ? { replyTo: savedMessage.replyTo } : {}),
           reactions: {},
         });
+
+        // ── STEP 3: Translate in background, then push translations ──
+        if (isGlobalMode) {
+          chatService.translateAndUpdate(
+            savedMessage.msgId,
+            room,
+            message,
+            sourceLocale,
+          ).then((translations) => {
+            // Emit translations to all users in the room
+            io.to(room).emit("translations_ready", {
+              msgId: savedMessage.msgId,
+              translations,
+            });
+          }).catch((err) => {
+            console.error(`[chat] Background translation failed for ${savedMessage.msgId}:`, err);
+            io.to(room).emit("error_event", {
+              message: "Translation unavailable. Showing original message.",
+            });
+          });
+        }
       } catch (error) {
         console.error("Error while sending message:", error);
+        const msgId = (data && typeof (data as any).msgId === 'string') ? (data as any).msgId : '';
+        if (msgId) {
+          socket.emit('message_status', {
+            msgId,
+            status: 'failed',
+            error: error instanceof Error ? error.message : 'Failed to send message',
+          });
+        }
         socket.emit("error_event", {
           message: error instanceof Error ? error.message : "Failed to send message",
         });
       }
     });
 
+    socket.on('add_reaction', async (data) => {
+      try {
+        if (!socket.data.userId) {
+          throw new Error('Unauthorized');
+        }
+        if (hitRateLimit(socket.id, 'add_reaction', 60, 60_000)) {
+          throw new Error('Too many reactions; slow down');
+        }
+
+        const room = typeof (data as any).room === 'string' ? String((data as any).room).trim() : '';
+        const msgId = typeof (data as any).msgId === 'string' ? String((data as any).msgId).trim() : '';
+        const emoji = typeof (data as any).emoji === 'string' ? String((data as any).emoji).trim() : '';
+
+        if (!room || !msgId || !emoji) {
+          throw new Error('Invalid reaction payload');
+        }
+        if (!socket.data.room || socket.data.room !== room) {
+          throw new Error('Join the room before reacting');
+        }
+
+        const message = await chatService.getMessageByMsgId(room, msgId);
+        if (!message) {
+          throw new Error('Message not found');
+        }
+
+        const username = socket.data.username || 'Anonymous';
+
+        // Toggle the user in emoji list
+        const current = message.reactions?.get(emoji) ?? [];
+        const next = current.includes(username)
+          ? current.filter((u) => u !== username)
+          : [...current, username];
+
+        message.reactions = message.reactions ?? new Map();
+        message.reactions.set(emoji, next);
+
+        await message.save();
+
+        const reactionsObj = message.reactions instanceof Map
+          ? Object.fromEntries(message.reactions)
+          : (message.reactions ?? {});
+
+        io.to(room).emit('reaction_update', { msgId, reactions: reactionsObj });
+      } catch (error) {
+        socket.emit('error_event', {
+          message: error instanceof Error ? error.message : 'Failed to add reaction',
+        });
+      }
+    });
+
+    // ── Typing Indicators (pure relay, no DB) ──
+    socket.on("typing_start", (data) => {
+      if (socket.data.room) {
+        const author = typeof (data as any)?.author === "string"
+          ? (data as any).author
+          : socket.data.username;
+        socket.to(socket.data.room).emit("user_typing", { author, isTyping: true });
+      }
+    });
+
+    socket.on("typing_stop", (data) => {
+      if (socket.data.room) {
+        const author = typeof (data as any)?.author === "string"
+          ? (data as any).author
+          : socket.data.username;
+        socket.to(socket.data.room).emit("user_typing", { author, isTyping: false });
+      }
+    });
 
     socket.on("disconnect", () => {
       perSocketRate.delete(socket.id);
-      console.log(`User Disconnected ${socket.id}`);
+      if (socket.data.room) {
+        io.to(socket.data.room).emit('room_users', roomMembers(socket.data.room));
+      }
+
     });
   });
 };

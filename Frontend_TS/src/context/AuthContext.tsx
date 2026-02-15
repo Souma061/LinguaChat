@@ -1,4 +1,13 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import {
+    createContext,
+    useCallback,
+    useContext,
+    useEffect,
+    useMemo,
+    useState,
+    type ReactNode,
+} from "react";
+import api from "../services/api";
 
 interface User {
   id: string;
@@ -9,8 +18,9 @@ interface User {
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  login: (token: string, user: User) => void;
+  login: (token: string, user: User, refreshToken?: string) => void;
   logout: () => void;
+  refreshAccessToken: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -30,13 +40,22 @@ const parseStoredUser = (): User | null => {
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(() => parseStoredUser());
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem("accessToken"));
+  const [token, setToken] = useState<string | null>(() =>
+    localStorage.getItem("accessToken"),
+  );
 
-  const login = (nextToken: string, nextUser: User) => {
+  const login = (
+    nextToken: string,
+    nextUser: User,
+    nextRefreshToken?: string,
+  ) => {
     setToken(nextToken);
     setUser(nextUser);
     localStorage.setItem("accessToken", nextToken);
     localStorage.setItem("user", JSON.stringify(nextUser));
+    if (nextRefreshToken) {
+      localStorage.setItem("refreshToken", nextRefreshToken);
+    }
   };
 
   const logout = () => {
@@ -44,7 +63,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(null);
     localStorage.removeItem("accessToken");
     localStorage.removeItem("user");
+    localStorage.removeItem("refreshToken");
   };
+
+  const refreshAccessToken = useCallback(async () => {
+    const storedRefreshToken = localStorage.getItem("refreshToken");
+    if (!storedRefreshToken) return;
+
+    try {
+      const res = await api.post("/auth/refresh-token", {
+        refreshToken: storedRefreshToken,
+      });
+      const { accessToken: newToken } = res.data;
+      setToken(newToken);
+      localStorage.setItem("accessToken", newToken);
+    } catch {
+      // Refresh token expired — force logout
+      logout();
+    }
+  }, []);
+
+  // Auto-refresh access token every 23 hours (before the 24h expiry)
+  useEffect(() => {
+    if (!token) return;
+    const interval = setInterval(
+      () => {
+        refreshAccessToken();
+      },
+      23 * 60 * 60 * 1000,
+    ); // 23 hours
+    return () => clearInterval(interval);
+  }, [token, refreshAccessToken]);
 
   const value = useMemo<AuthContextType>(
     () => ({
@@ -52,9 +101,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       token,
       login,
       logout,
+      refreshAccessToken,
       isAuthenticated: Boolean(token && user),
     }),
-    [token, user]
+    [token, user, refreshAccessToken],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

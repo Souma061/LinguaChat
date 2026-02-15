@@ -9,11 +9,13 @@ export interface IMessage extends Document {
   sourceLocale: string;
   msgId: string;
   createdAt: Date;
+  reactions?: Map<string, string[]>;
   replyTo?: {
     msgId: string;
     author: string;
     message: string;
   }
+
 }
 
 
@@ -50,6 +52,11 @@ const MessageSchema: Schema<IMessage> = new Schema({
     msgId: String,
     author: String,
     message: String,
+  },
+  reactions: {
+    type: Map,
+    of: [String],
+    default: {},
   },
 }, {
   timestamps: true,

@@ -1,15 +1,15 @@
-import type { AxiosError } from 'axios';
-import { AlertCircle, Loader2, Lock, Mail, User, UserPlus } from 'lucide-react';
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import api from '../../services/api';
+import type { AxiosError } from "axios";
+import { AlertCircle, Loader2, Lock, Mail, User, UserPlus } from "lucide-react";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
+import api from "../../services/api";
 
 const RegisterPage = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [email, setEmail] = useState('');
-  const [error, setError] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const { login } = useAuth();
@@ -17,44 +17,48 @@ const RegisterPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
 
     // Strict Input Validation
     if (!username.trim() || !email.trim() || !password.trim()) {
-      setError('All fields are required.');
+      setError("All fields are required.");
       return;
     }
 
     if (username.length < 6) {
-      setError('Username must be at least 6 characters long.');
+      setError("Username must be at least 6 characters long.");
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setError('Please enter a valid email address.');
+      setError("Please enter a valid email address.");
       return;
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters long.');
+      setError("Password must be at least 6 characters long.");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const response = await api.post('/auth/register', { username, email, password });
+      const response = await api.post("/auth/register", {
+        username,
+        email,
+        password,
+      });
 
-      const { accessToken, user } = response.data;
+      const { accessToken, refreshToken, user } = response.data;
 
       // Auto-login the user after registration
-      login(accessToken, user);
+      login(accessToken, user, refreshToken);
 
-      navigate('/');
+      navigate("/");
     } catch (err) {
       const axiosError = err as AxiosError<{ error?: string }>;
-      setError(axiosError.response?.data?.error || 'Registration failed');
+      setError(axiosError.response?.data?.error || "Registration failed");
     } finally {
       setIsLoading(false);
     }
@@ -65,7 +69,6 @@ const RegisterPage = () => {
       <div className="absolute inset-0 bg-white/30 dark:bg-black/40 backdrop-blur-sm"></div>
 
       <div className="max-w-md w-full space-y-8 relative z-10 transition-all duration-300 ease-in-out transform">
-
         <div className="text-center">
           <div className="mx-auto h-16 w-16 bg-gradient-to-tr from-indigo-600 to-violet-600 rounded-2xl flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-0 transition-transform duration-300">
             <span className="text-white text-3xl font-bold">L</span>
@@ -74,17 +77,22 @@ const RegisterPage = () => {
             Create an account
           </h2>
           <p className="mt-2 text-md text-gray-600 dark:text-gray-300">
-            Join <span className="font-semibold text-indigo-600 dark:text-indigo-400">LinguaChat</span> today
+            Join{" "}
+            <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+              LinguaChat
+            </span>{" "}
+            today
           </p>
         </div>
 
         <div className="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl py-8 px-4 shadow-2xl border border-white/20 dark:border-slate-700 rounded-2xl sm:px-10">
           <form className="space-y-6" onSubmit={handleSubmit}>
-
             {error && (
               <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-4 rounded-xl flex items-center gap-3 animate-pulse">
                 <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
-                <p className="text-sm text-red-700 dark:text-red-300 font-medium">{error}</p>
+                <p className="text-sm text-red-700 dark:text-red-300 font-medium">
+                  {error}
+                </p>
               </div>
             )}
 
@@ -169,8 +177,11 @@ const RegisterPage = () => {
 
           <div className="mt-8 text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Already have an account?{' '}
-              <Link to="/login" className="font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors">
+              Already have an account?{" "}
+              <Link
+                to="/login"
+                className="font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+              >
                 Sign in
               </Link>
             </p>

@@ -55,10 +55,10 @@ const MessageBubble = ({
   // Build reactions display
   const reactionEntries: [string, string[]][] = msg.reactions
     ? (Object.keys(msg.reactions)
-        .map((key) => [key, msg.reactions![key]] as [string, unknown])
-        .filter(
-          ([, users]) => Array.isArray(users) && (users as string[]).length > 0,
-        ) as [string, string[]][])
+      .map((key) => [key, msg.reactions![key]] as [string, unknown])
+      .filter(
+        ([, users]) => Array.isArray(users) && (users as string[]).length > 0,
+      ) as [string, string[]][])
     : [];
 
   return (
@@ -72,11 +72,10 @@ const MessageBubble = ({
         {/* Avatar */}
         {!isMe && (
           <div
-            className={`shrink-0 h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium select-none ${
-              showAvatar
+            className={`shrink-0 h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium select-none ${showAvatar
                 ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300"
                 : "opacity-0"
-            }`}
+              }`}
           >
             {msg.author.charAt(0).toUpperCase()}
           </div>
@@ -134,22 +133,20 @@ const MessageBubble = ({
 
             {/* The Bubble */}
             <div
-              className={`px-4 py-2.5 rounded-2xl shadow-sm text-sm break-words relative ${
-                isMe
+              className={`px-4 py-2.5 rounded-2xl shadow-sm text-sm break-words relative ${isMe
                   ? "bg-indigo-600 text-white rounded-br-sm"
                   : "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-100 dark:border-gray-700 rounded-bl-sm"
-              }`}
+                }`}
             >
               {/* Reply Preview (quoted message) */}
               {msg.replyTo && msg.replyTo.author && msg.replyTo.message && (
                 <button
                   type="button"
                   onClick={() => onScrollToMessage?.(msg.replyTo!.msgId)}
-                  className={`w-full text-left mb-2 px-3 py-1.5 rounded-lg border-l-3 ${
-                    isMe
+                  className={`w-full text-left mb-2 px-3 py-1.5 rounded-lg border-l-3 ${isMe
                       ? "bg-indigo-700/50 border-indigo-300 text-indigo-100"
                       : "bg-gray-50 dark:bg-gray-700/50 border-indigo-400 text-gray-600 dark:text-gray-300"
-                  }`}
+                    }`}
                 >
                   <span className="text-xs font-semibold block">
                     {msg.replyTo.author}
@@ -167,9 +164,8 @@ const MessageBubble = ({
 
               {/* Time */}
               <div
-                className={`text-[10px] mt-1 opacity-70 text-right ${
-                  isMe ? "text-indigo-100" : "text-gray-400"
-                }`}
+                className={`text-[10px] mt-1 opacity-70 text-right ${isMe ? "text-indigo-100" : "text-gray-400"
+                  }`}
               >
                 {timeLabel}
               </div>
@@ -188,11 +184,10 @@ const MessageBubble = ({
                     <button
                       key={emoji}
                       onClick={() => onReact(msg.msgId, emoji)}
-                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-all ${
-                        iReacted
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-all ${iReacted
                           ? "bg-indigo-50 border-indigo-300 text-indigo-700 dark:bg-indigo-900/30 dark:border-indigo-600 dark:text-indigo-300"
                           : "bg-gray-50 border-gray-200 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                      }`}
+                        }`}
                       title={userList.join(", ")}
                     >
                       <span>{emoji}</span>

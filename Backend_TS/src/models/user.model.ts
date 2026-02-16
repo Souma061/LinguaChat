@@ -1,5 +1,5 @@
-import mongoose, {Document, Schema} from "mongoose";
-import { string } from "zod";
+import mongoose, { Document, Schema } from "mongoose";
+
 
 export interface IUser extends Document {
   username: string;
@@ -10,15 +10,15 @@ export interface IUser extends Document {
   updatedAt: Date;
 };
 
-const UserSchema = new Schema<IUser> ({
-  username:{
+const UserSchema = new Schema<IUser>({
+  username: {
     type: String,
     required: true,
     unique: true,
   },
   email: {
     type: String,
-    required:true,
+    required: true,
     unique: true,
   },
   password: {
@@ -31,7 +31,7 @@ const UserSchema = new Schema<IUser> ({
     default: 'user',
 
   }
-},{
+}, {
   timestamps: true,
 })
 

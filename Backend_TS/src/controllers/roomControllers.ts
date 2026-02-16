@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { Room } from "../models/room.model.ts";
+import * as roomService from "../services/rom.service.ts";
 
 
 export const getPublicRooms = async (req: Request, res: Response) => {
@@ -112,5 +113,39 @@ export const updateRoomMode = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error updating room mode:", error);
     res.status(500).json({ error: "Failed to update room mode" });
+  }
+};
+
+export const deleteRoom = async (req: Request, res: Response) => {
+  try {
+    const id = String(req.params.id || "").trim();
+    const userId = (req as any).user?.id;
+
+    if (!id) {
+      res.status(400).json({ error: "Room ID is required" });
+      return;
+    }
+
+    if (!userId) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const result = await roomService.deleteRoom(id, userId);
+    res.status(200).json({ message: `Room "${result.name}" deleted successfully` });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to delete room";
+
+    if (message === "Room not found") {
+      res.status(404).json({ error: message });
+      return;
+    }
+    if (message === "Only the room owner can delete this room") {
+      res.status(403).json({ error: message });
+      return;
+    }
+
+    console.error("Error deleting room:", error);
+    res.status(500).json({ error: "Failed to delete room" });
   }
 };

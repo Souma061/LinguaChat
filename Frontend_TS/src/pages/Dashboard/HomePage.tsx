@@ -14,6 +14,7 @@ import {
   Settings,
   Share2,
   Shield,
+  Trash2,
   Users,
   X,
   Zap,
@@ -62,25 +63,17 @@ const HomePage = () => {
   const [manageRoom, setManageRoom] = useState<Room | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
 
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [joinRoomId, setJoinRoomId] = useState("");
   const [joinError, setJoinError] = useState<string | null>(null);
   const [isJoining, setIsJoining] = useState(false);
 
-  useEffect(() => {
-    fetchRooms();
-  }, []);
-
-  useEffect(() => {
-    if (!socket) return;
-    const handleRoomCreated = () => fetchRooms();
-    socket.on("room_created", handleRoomCreated);
-    return () => {
-      socket.off("room_created", handleRoomCreated);
-    };
-  }, [socket]);
-
-  const fetchRooms = async () => {
+  const fetchRooms = useCallback(async () => {
+    setIsLoading(true);
     try {
       const res = await api.get("/rooms");
       setRooms(res.data);
@@ -89,7 +82,20 @@ const HomePage = () => {
     } finally {
       setTimeout(() => setIsLoading(false), 400);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchRooms();
+  }, [fetchRooms]);
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleRoomCreated = () => fetchRooms();
+    socket.on("room_created", handleRoomCreated);
+    return () => {
+      socket.off("room_created", handleRoomCreated);
+    };
+  }, [socket, fetchRooms]);
 
   const handleCreateRoom = (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,7 +113,7 @@ const HomePage = () => {
     if (!socket || !isConnected) {
       setCreateError(
         connectionError ||
-          "Socket not connected. Please refresh or login again.",
+        "Socket not connected. Please refresh or login again.",
       );
       return;
     }
@@ -117,6 +123,7 @@ const HomePage = () => {
 
     const onCreated = (data: { name: string }) => {
       window.clearTimeout(timeoutId);
+      socket.off("error_event", onError);
       setIsCreating(false);
       setShowCreateModal(false);
       setNewRoomName("");
@@ -189,14 +196,33 @@ const HomePage = () => {
       }
     } catch (error) {
       console.error("Failed to update mode", error);
-      alert("Failed to update room mode");
     } finally {
       setIsUpdating(false);
     }
   };
 
+  const handleDeleteRoom = async (roomId: string) => {
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await api.delete(`/rooms/${roomId}`);
+      setManageRoom(null);
+      setConfirmDelete(false);
+      fetchRooms();
+    } catch (error) {
+      const axiosError = error as { response?: { data?: { error?: string } } };
+      setDeleteError(
+        axiosError.response?.data?.error || "Failed to delete room. Please try again."
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const copyToClipboard = useCallback((text: string, field: string) => {
-    navigator.clipboard.writeText(text);
+    navigator.clipboard.writeText(text).catch((err) => {
+      console.error("Failed to copy to clipboard", err);
+    });
     setCopiedField(field);
     setTimeout(() => setCopiedField(null), 2000);
   }, []);
@@ -271,11 +297,10 @@ const HomePage = () => {
     return (
       <div className="group relative bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
         <div
-          className={`absolute top-0 right-0 w-32 h-32 bg-linear-to-br ${
-            room.mode === "Global"
-              ? "from-purple-500/10 to-blue-500/10"
-              : "from-green-500/10 to-teal-500/10"
-          } rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110`}
+          className={`absolute top-0 right-0 w-32 h-32 bg-linear-to-br ${room.mode === "Global"
+            ? "from-purple-500/10 to-blue-500/10"
+            : "from-green-500/10 to-teal-500/10"
+            } rounded-bl-full -mr-10 -mt-10 transition-transform group-hover:scale-110`}
         />
 
         <div
@@ -284,11 +309,10 @@ const HomePage = () => {
         >
           <div className="flex justify-between items-start mb-4">
             <div
-              className={`p-3 rounded-xl ${
-                room.mode === "Global"
-                  ? "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300"
-                  : "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-300"
-              }`}
+              className={`p-3 rounded-xl ${room.mode === "Global"
+                ? "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300"
+                : "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-300"
+                }`}
             >
               {room.mode === "Global" ? (
                 <Globe className="h-6 w-6" />
@@ -300,11 +324,10 @@ const HomePage = () => {
             <div className="flex items-center gap-2">
               <RoleBadge role={role} />
               <span
-                className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                  room.mode === "Global"
-                    ? "bg-purple-50 text-purple-700 dark:bg-purple-900/50 dark:text-purple-200"
-                    : "bg-green-50 text-green-700 dark:bg-green-900/50 dark:text-green-200"
-                }`}
+                className={`px-3 py-1 rounded-full text-xs font-semibold ${room.mode === "Global"
+                  ? "bg-purple-50 text-purple-700 dark:bg-purple-900/50 dark:text-purple-200"
+                  : "bg-green-50 text-green-700 dark:bg-green-900/50 dark:text-green-200"
+                  }`}
               >
                 {room.mode}
               </span>
@@ -431,21 +454,19 @@ const HomePage = () => {
             <div className="hidden sm:flex bg-white dark:bg-gray-800 p-1 rounded-lg border border-gray-200 dark:border-gray-700">
               <button
                 onClick={() => setViewMode("grid")}
-                className={`p-2 rounded-md transition-all ${
-                  viewMode === "grid"
-                    ? "bg-gray-100 dark:bg-gray-700 text-indigo-600"
-                    : "text-gray-400"
-                }`}
+                className={`p-2 rounded-md transition-all ${viewMode === "grid"
+                  ? "bg-gray-100 dark:bg-gray-700 text-indigo-600"
+                  : "text-gray-400"
+                  }`}
               >
                 <LayoutGrid className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setViewMode("list")}
-                className={`p-2 rounded-md transition-all ${
-                  viewMode === "list"
-                    ? "bg-gray-100 dark:bg-gray-700 text-indigo-600"
-                    : "text-gray-400"
-                }`}
+                className={`p-2 rounded-md transition-all ${viewMode === "list"
+                  ? "bg-gray-100 dark:bg-gray-700 text-indigo-600"
+                  : "text-gray-400"
+                  }`}
               >
                 <ListIcon className="h-4 w-4" />
               </button>
@@ -512,11 +533,10 @@ const HomePage = () => {
           </div>
         ) : (
           <div
-            className={`grid gap-6 ${
-              viewMode === "grid"
-                ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-                : "grid-cols-1"
-            }`}
+            className={`grid gap-6 ${viewMode === "grid"
+              ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+              : "grid-cols-1"
+              }`}
           >
             {filteredRooms.map((room) => (
               <RoomCard key={room._id} room={room} />
@@ -568,22 +588,26 @@ const HomePage = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div
                       onClick={() => setNewRoomMode("Global")}
-                      className={`cursor-pointer relative rounded-xl border-2 p-4 transition-all ${
-                        newRoomMode === "Global"
-                          ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20"
-                          : "border-gray-100 dark:border-gray-700 hover:border-gray-300"
-                      }`}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setNewRoomMode("Global");
+                        }
+                      }}
+                      className={`cursor-pointer relative rounded-xl border-2 p-4 transition-all ${newRoomMode === "Global"
+                        ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20"
+                        : "border-gray-100 dark:border-gray-700 hover:border-gray-300"
+                        }`}
                       role="button"
                       aria-pressed={newRoomMode === "Global"}
                       tabIndex={0}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <Globe
-                          className={`h-6 w-6 ${
-                            newRoomMode === "Global"
-                              ? "text-indigo-600"
-                              : "text-gray-400"
-                          }`}
+                          className={`h-6 w-6 ${newRoomMode === "Global"
+                            ? "text-indigo-600"
+                            : "text-gray-400"
+                            }`}
                         />
                         {newRoomMode === "Global" && (
                           <div className="h-2 w-2 rounded-full bg-indigo-600" />
@@ -599,22 +623,26 @@ const HomePage = () => {
 
                     <div
                       onClick={() => setNewRoomMode("Native")}
-                      className={`cursor-pointer relative rounded-xl border-2 p-4 transition-all ${
-                        newRoomMode === "Native"
-                          ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                          : "border-gray-100 dark:border-gray-700 hover:border-gray-300"
-                      }`}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setNewRoomMode("Native");
+                        }
+                      }}
+                      className={`cursor-pointer relative rounded-xl border-2 p-4 transition-all ${newRoomMode === "Native"
+                        ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                        : "border-gray-100 dark:border-gray-700 hover:border-gray-300"
+                        }`}
                       role="button"
                       aria-pressed={newRoomMode === "Native"}
                       tabIndex={0}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <Zap
-                          className={`h-6 w-6 ${
-                            newRoomMode === "Native"
-                              ? "text-green-600"
-                              : "text-gray-400"
-                          }`}
+                          className={`h-6 w-6 ${newRoomMode === "Native"
+                            ? "text-green-600"
+                            : "text-gray-400"
+                            }`}
                         />
                         {newRoomMode === "Native" && (
                           <div className="h-2 w-2 rounded-full bg-green-500" />
@@ -841,7 +869,11 @@ const HomePage = () => {
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div
             className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm"
-            onClick={() => setManageRoom(null)}
+            onClick={() => {
+              setManageRoom(null);
+              setConfirmDelete(false);
+              setDeleteError(null);
+            }}
           />
           <div className="flex items-center justify-center min-h-screen px-4">
             <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 shadow-2xl relative z-10">
@@ -855,7 +887,11 @@ const HomePage = () => {
                   </p>
                 </div>
                 <button
-                  onClick={() => setManageRoom(null)}
+                  onClick={() => {
+                    setManageRoom(null);
+                    setConfirmDelete(false);
+                    setDeleteError(null);
+                  }}
                   className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400"
                 >
                   <X className="h-5 w-5" />
@@ -870,19 +906,17 @@ const HomePage = () => {
                   <button
                     onClick={() => handleUpdateMode(manageRoom._id, "Global")}
                     disabled={isUpdating}
-                    className={`relative rounded-xl border-2 p-4 transition-all text-left ${
-                      manageRoom.mode === "Global"
-                        ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20"
-                        : "border-gray-100 dark:border-gray-700 hover:border-gray-300"
-                    }`}
+                    className={`relative rounded-xl border-2 p-4 transition-all text-left ${manageRoom.mode === "Global"
+                      ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20"
+                      : "border-gray-100 dark:border-gray-700 hover:border-gray-300"
+                      }`}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <Globe
-                        className={`h-6 w-6 ${
-                          manageRoom.mode === "Global"
-                            ? "text-indigo-600"
-                            : "text-gray-400"
-                        }`}
+                        className={`h-6 w-6 ${manageRoom.mode === "Global"
+                          ? "text-indigo-600"
+                          : "text-gray-400"
+                          }`}
                       />
                       {manageRoom.mode === "Global" && (
                         <div className="h-2 w-2 rounded-full bg-indigo-600" />
@@ -897,19 +931,17 @@ const HomePage = () => {
                   <button
                     onClick={() => handleUpdateMode(manageRoom._id, "Native")}
                     disabled={isUpdating}
-                    className={`relative rounded-xl border-2 p-4 transition-all text-left ${
-                      manageRoom.mode === "Native"
-                        ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                        : "border-gray-100 dark:border-gray-700 hover:border-gray-300"
-                    }`}
+                    className={`relative rounded-xl border-2 p-4 transition-all text-left ${manageRoom.mode === "Native"
+                      ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                      : "border-gray-100 dark:border-gray-700 hover:border-gray-300"
+                      }`}
                   >
                     <div className="flex items-center justify-between mb-2">
                       <Zap
-                        className={`h-6 w-6 ${
-                          manageRoom.mode === "Native"
-                            ? "text-green-600"
-                            : "text-gray-400"
-                        }`}
+                        className={`h-6 w-6 ${manageRoom.mode === "Native"
+                          ? "text-green-600"
+                          : "text-gray-400"
+                          }`}
                       />
                       {manageRoom.mode === "Native" && (
                         <div className="h-2 w-2 rounded-full bg-green-500" />
@@ -922,6 +954,64 @@ const HomePage = () => {
                   </button>
                 </div>
               </div>
+
+              {/* Danger Zone — Delete Room (owner only) */}
+              {getUserRole(manageRoom) === "owner" && (
+                <div className="mt-6 pt-5 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Trash2 className="h-4 w-4 text-red-500" />
+                    <span className="text-sm font-semibold text-red-600 dark:text-red-400">
+                      Danger Zone
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                    Permanently delete this room and all its messages. This action cannot be undone.
+                  </p>
+
+                  {deleteError && (
+                    <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-600 dark:text-red-400 mb-3">
+                      {deleteError}
+                    </div>
+                  )}
+
+                  {!confirmDelete ? (
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDelete(true)}
+                      className="w-full px-4 py-2.5 border border-red-300 dark:border-red-700 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                    >
+                      Delete Room
+                    </button>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-xs text-red-600 dark:text-red-400 font-medium">
+                        Are you sure? This will delete "{manageRoom.name}" and all {manageRoom.members?.length || 0} members' messages.
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setConfirmDelete(false);
+                            setDeleteError(null);
+                          }}
+                          disabled={isDeleting}
+                          className="flex-1 px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteRoom(manageRoom._id)}
+                          disabled={isDeleting}
+                          className="flex-1 px-4 py-2.5 bg-red-600 rounded-xl text-sm font-medium text-white hover:bg-red-700 shadow-lg shadow-red-500/30 transition-all disabled:opacity-50"
+                        >
+                          {isDeleting ? "Deleting…" : "Yes, Delete"}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

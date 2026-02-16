@@ -47,7 +47,9 @@ const MessageBubble = ({
   const [copied, setCopied] = useState(false);
 
   const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(displayText);
+    navigator.clipboard.writeText(displayText).catch((err) => {
+      console.error("Failed to copy to clipboard", err);
+    });
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }, [displayText]);
@@ -73,8 +75,8 @@ const MessageBubble = ({
         {!isMe && (
           <div
             className={`shrink-0 h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium select-none ${showAvatar
-                ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300"
-                : "opacity-0"
+              ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300"
+              : "opacity-0"
               }`}
           >
             {msg.author.charAt(0).toUpperCase()}
@@ -134,8 +136,8 @@ const MessageBubble = ({
             {/* The Bubble */}
             <div
               className={`px-4 py-2.5 rounded-2xl shadow-sm text-sm break-words relative ${isMe
-                  ? "bg-indigo-600 text-white rounded-br-sm"
-                  : "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-100 dark:border-gray-700 rounded-bl-sm"
+                ? "bg-indigo-600 text-white rounded-br-sm"
+                : "bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-100 dark:border-gray-700 rounded-bl-sm"
                 }`}
             >
               {/* Reply Preview (quoted message) */}
@@ -144,8 +146,8 @@ const MessageBubble = ({
                   type="button"
                   onClick={() => onScrollToMessage?.(msg.replyTo!.msgId)}
                   className={`w-full text-left mb-2 px-3 py-1.5 rounded-lg border-l-3 ${isMe
-                      ? "bg-indigo-700/50 border-indigo-300 text-indigo-100"
-                      : "bg-gray-50 dark:bg-gray-700/50 border-indigo-400 text-gray-600 dark:text-gray-300"
+                    ? "bg-indigo-700/50 border-indigo-300 text-indigo-100"
+                    : "bg-gray-50 dark:bg-gray-700/50 border-indigo-400 text-gray-600 dark:text-gray-300"
                     }`}
                 >
                   <span className="text-xs font-semibold block">
@@ -185,8 +187,8 @@ const MessageBubble = ({
                       key={emoji}
                       onClick={() => onReact(msg.msgId, emoji)}
                       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs border transition-all ${iReacted
-                          ? "bg-indigo-50 border-indigo-300 text-indigo-700 dark:bg-indigo-900/30 dark:border-indigo-600 dark:text-indigo-300"
-                          : "bg-gray-50 border-gray-200 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        ? "bg-indigo-50 border-indigo-300 text-indigo-700 dark:bg-indigo-900/30 dark:border-indigo-600 dark:text-indigo-300"
+                        : "bg-gray-50 border-gray-200 text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
                         }`}
                       title={userList.join(", ")}
                     >

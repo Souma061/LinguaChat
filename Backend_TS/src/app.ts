@@ -33,14 +33,6 @@ app.use(cors({
   credentials: true,
 }));
 
-// Explicitly handle preflight for all routes
-app.options("*", cors({
-  origin: corsOrigins,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true,
-}));
-
 app.use(express.json());
 
 if (!isTestEnv) {

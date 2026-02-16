@@ -135,7 +135,7 @@ export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerT
       io.to(data.room).emit("room_users", occupants);
 
       io.to(data.room).emit("user_joined", {
-        message: "Anonymous",
+        message: `${username} joined the room`,
       });
     });
 
@@ -230,11 +230,23 @@ export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerT
 
         const updated = await roomService.updateRoomMode(room, nextMode);
 
-        io.to(room).emit("room_info", {
-          name: updated.name,
-          mode: updated.mode,
-          isAdmin: true,
-        });
+        // Emit room_info individually so each user gets their correct isAdmin flag
+        const roomSockets = io.sockets.adapter.rooms.get(room);
+        if (roomSockets) {
+          for (const sid of roomSockets) {
+            const s = io.sockets.sockets.get(sid);
+            if (s) {
+              const userIsAdmin = roomInfo.admins.some(
+                adminId => adminId.toString() === s.data.userId
+              );
+              s.emit("room_info", {
+                name: updated.name,
+                mode: updated.mode,
+                isAdmin: userIsAdmin,
+              });
+            }
+          }
+        }
       } catch (error) {
         socket.emit("error_event", {
           message: error instanceof Error ? error.message : "Failed to update room settings",

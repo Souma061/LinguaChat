@@ -6,15 +6,15 @@ const getDeviceInfo = (req: Request): { device: string; ip: string } => {
   const userAgent = req.get('user-agent') || 'Unknown Device';
   const ip = req.ip || req.socket.remoteAddress || '0.0.0.0';
 
-  // Simple device detection from user-agent
+  // Simple device detection from user-agent (specific before generic)
   let device = 'Unknown Device';
-  if (userAgent.includes('Mobile')) device = 'Mobile';
+  if (userAgent.includes('iPad')) device = 'iPad';
+  else if (userAgent.includes('iPhone')) device = 'iPhone';
+  else if (userAgent.includes('Android')) device = 'Android';
+  else if (userAgent.includes('Mobile')) device = 'Mobile';
   else if (userAgent.includes('Windows')) device = 'Windows PC';
   else if (userAgent.includes('Mac')) device = 'Mac';
   else if (userAgent.includes('Linux')) device = 'Linux PC';
-  else if (userAgent.includes('iPad')) device = 'iPad';
-  else if (userAgent.includes('iPhone')) device = 'iPhone';
-  else if (userAgent.includes('Android')) device = 'Android';
 
   return { device, ip };
 }

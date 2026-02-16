@@ -66,10 +66,23 @@ const RoomPage = () => {
 
   const messageEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const settingsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setLastError(connectionError);
   }, [connectionError]);
+
+  // Close settings dropdown on outside click
+  useEffect(() => {
+    if (!isSettingsOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
+        setIsSettingsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [isSettingsOpen]);
 
   useEffect(() => {
     if (!socket) return;
@@ -155,11 +168,8 @@ const RoomPage = () => {
       setMessages((prev) => [...prev, msg]);
     };
 
-    const onUserJoined = (
-      data: { userCount?: number; message?: string } | null,
-    ) => {
-      if (data && typeof data.userCount === "number") {
-      }
+    const onUserJoined = () => {
+      // Handle user joined event
     };
 
     const onRoomUsers = (users: RoomUser[]) => {
@@ -186,9 +196,9 @@ const RoomPage = () => {
         prev.map((msg) =>
           msg.msgId === data.msgId
             ? {
-                ...msg,
-                translations: { ...msg.translations, ...data.translations },
-              }
+              ...msg,
+              translations: { ...msg.translations, ...data.translations },
+            }
             : msg,
         ),
       );
@@ -309,44 +319,47 @@ const RoomPage = () => {
     [socket, isConnected, roomId, user],
   );
 
-  const handleSend = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
-    if (!roomId) {
-      setLastError("Missing room id");
-      return;
-    }
-    if (!socket || !isConnected) {
-      setLastError("Socket not connected. Please re-login or refresh.");
-      return;
-    }
+  const handleSend = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!input.trim()) return;
+      if (!roomId) {
+        setLastError("Missing room id");
+        return;
+      }
+      if (!socket || !isConnected) {
+        setLastError("Socket not connected. Please re-login or refresh.");
+        return;
+      }
 
-    setLastError(null);
+      setLastError(null);
 
-    // Stop typing indicator
-    if (isTypingRef.current) {
-      isTypingRef.current = false;
-      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-      socket.emit("typing_stop", {
+      // Stop typing indicator
+      if (isTypingRef.current) {
+        isTypingRef.current = false;
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        socket.emit("typing_stop", {
+          room: roomId,
+          author: user?.username || "Anonymous",
+        });
+      }
+
+      const sourceLocale = detectSourceLanguage(input.trim());
+
+      socket.emit("send_message", {
         room: roomId,
         author: user?.username || "Anonymous",
+        message: input,
+        sourceLocale,
+        msgId: `${Date.now()}-${Math.random()}`,
+        ...(replyTo ? { replyTo } : {}),
       });
-    }
-
-    const sourceLocale = detectSourceLanguage(input.trim());
-
-    socket.emit("send_message", {
-      room: roomId,
-      author: user?.username || "Anonymous",
-      message: input,
-      sourceLocale,
-      msgId: `${Date.now()}-${Math.random()}`,
-      ...(replyTo ? { replyTo } : {}),
-    });
-    setInput("");
-    setReplyTo(null);
-    setIsEmojiOpen(false);
-  };
+      setInput("");
+      setReplyTo(null);
+      setIsEmojiOpen(false);
+    },
+    [input, roomId, socket, isConnected, user, replyTo, detectSourceLanguage],
+  );
 
   const handleReact = useCallback(
     (msgId: string, emoji: string) => {
@@ -463,11 +476,10 @@ const RoomPage = () => {
             <h1 className="font-bold text-gray-900 dark:text-white flex items-center gap-2">
               {roomTitle}
               <span
-                className={`px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wide border ${
-                  roomMode === "Global"
+                className={`px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wide border ${roomMode === "Global"
                     ? "bg-purple-50 text-purple-600 border-purple-100 dark:bg-purple-900/20 dark:border-purple-800"
                     : "bg-green-50 text-green-600 border-green-100 dark:bg-green-900/20 dark:border-green-800"
-                }`}
+                  }`}
               >
                 {roomMode}
               </span>
@@ -488,18 +500,17 @@ const RoomPage = () => {
           {roomMode === "Global" && (
             <button
               onClick={() => setIsNativeMode(!isNativeMode)}
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                !isNativeMode
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${!isNativeMode
                   ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
                   : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
-              }`}
+                }`}
             >
               <Globe className="h-3 w-3" />
               {!isNativeMode ? "Translated" : "Original"}
             </button>
           )}
 
-          <div className="relative">
+          <div className="relative" ref={settingsRef}>
             <button
               type="button"
               onClick={() => setIsSettingsOpen((v) => !v)}

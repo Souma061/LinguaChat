@@ -1,23 +1,22 @@
 import {
+  ChatCircleDots,
+  ChatsCircle,
   Check,
-  Copy,
   Crown,
-  Globe,
   SquaresFour as LayoutGrid,
   Link as Link2,
   List as ListIcon,
   SignOut as LogOut,
   ChatCircle as MessageSquare,
-  Plus,
   QrCode,
   MagnifyingGlass as Search,
   Gear as Settings,
   ShareNetwork as Share2,
   Shield,
+  Translate,
   Trash as Trash2,
   Users,
-  X,
-  Lightning as Zap,
+  X
 } from "@phosphor-icons/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -315,9 +314,9 @@ const HomePage = () => {
                 }`}
             >
               {room.mode === "Global" ? (
-                <Globe className="h-6 w-6" />
+                <Translate className="h-7 w-7 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3" weight="regular" />
               ) : (
-                <Zap className="h-6 w-6" />
+                <ChatCircleDots className="h-7 w-7 transition-transform duration-300 group-hover:scale-110" weight="regular" />
               )}
             </div>
 
@@ -344,11 +343,11 @@ const HomePage = () => {
 
           <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
             <div className="flex items-center gap-1.5">
-              <Users className="h-3.5 w-3.5" />
+              <Users className="h-4 w-4" weight="regular" />
               <span>{room.members?.length || 0} members</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <Crown className="h-3 w-3 text-amber-500" />
+              <Crown className="h-3.5 w-3.5 text-amber-500" weight="fill" />
               <span>{ownerName}</span>
             </div>
           </div>
@@ -369,7 +368,7 @@ const HomePage = () => {
                 className="p-1.5 rounded-md text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-white dark:hover:bg-gray-600 shadow-sm transition-all"
                 title="Room Settings"
               >
-                <Settings className="h-3.5 w-3.5" />
+                <Settings className="h-4 w-4 transition-transform group-hover:rotate-90 duration-500" weight="regular" />
               </button>
             )}
             <div className="w-px bg-gray-200 dark:bg-gray-600 mx-1 my-1" />
@@ -379,9 +378,9 @@ const HomePage = () => {
                 e.stopPropagation();
                 setShareRoom(room);
               }}
-              className="flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 transition-all"
+              className="flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs font-medium text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 transition-all group/share"
             >
-              <Share2 className="h-3.5 w-3.5" />
+              <Share2 className="h-4 w-4 group-hover/share:scale-110 transition-transform" weight="regular" />
               Share
             </button>
           </div>
@@ -459,7 +458,7 @@ const HomePage = () => {
                   : "text-gray-400"
                   }`}
               >
-                <LayoutGrid className="h-4 w-4" />
+                <LayoutGrid className="h-5 w-5" weight="regular" />
               </button>
               <button
                 onClick={() => setViewMode("list")}
@@ -468,7 +467,7 @@ const HomePage = () => {
                   : "text-gray-400"
                   }`}
               >
-                <ListIcon className="h-4 w-4" />
+                <ListIcon className="h-5 w-5" weight="regular" />
               </button>
             </div>
 
@@ -484,15 +483,15 @@ const HomePage = () => {
               onClick={() => setShowCreateModal(true)}
               className="flex-1 sm:flex-none inline-flex items-center justify-center px-5 py-2.5 border border-transparent rounded-xl shadow-lg shadow-indigo-500/30 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 transition-all hover:scale-105 active:scale-95"
             >
-              <Plus className="h-5 w-5 mr-2" />
+              <ChatsCircle className="h-6 w-6 mr-2 transition-transform group-hover:scale-110" weight="bold" />
               Create Room
             </button>
           </div>
         </div>
 
         <div className="mb-6">
-          <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+          <div className="relative max-w-md group">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 transition-colors group-focus-within:text-indigo-500" weight="regular" />
             <input
               type="text"
               placeholder="Search rooms..."
@@ -552,7 +551,7 @@ const HomePage = () => {
             onClick={() => setShowCreateModal(false)}
           />
           <div className="flex items-center justify-center min-h-screen px-4">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl transform transition-all relative z-10">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl transform transition-all relative z-10 animate-fade-in-scale">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
                 Create New Room
               </h3>
@@ -603,7 +602,7 @@ const HomePage = () => {
                       tabIndex={0}
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <Globe
+                        <Translate
                           className={`h-6 w-6 ${newRoomMode === "Global"
                             ? "text-indigo-600"
                             : "text-gray-400"
@@ -638,7 +637,7 @@ const HomePage = () => {
                       tabIndex={0}
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <Zap
+                        <ChatCircleDots
                           className={`h-6 w-6 ${newRoomMode === "Native"
                             ? "text-green-600"
                             : "text-gray-400"
@@ -652,7 +651,7 @@ const HomePage = () => {
                         Native
                       </p>
                       <p className="text-xs text-gray-500 mt-1">
-                        Raw Speed (No AI)
+                        Direct Chat
                       </p>
                     </div>
                   </div>
@@ -699,7 +698,7 @@ const HomePage = () => {
             onClick={() => setShowJoinModal(false)}
           />
           <div className="flex items-center justify-center min-h-screen px-4">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 shadow-2xl relative z-10">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 shadow-2xl relative z-10 animate-fade-in-scale">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                   Join Room by ID or Name
@@ -756,7 +755,7 @@ const HomePage = () => {
             onClick={() => setShareRoom(null)}
           />
           <div className="flex items-center justify-center min-h-screen px-4">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 shadow-2xl relative z-10">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 shadow-2xl relative z-10 animate-fade-in-scale">
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h3 className="text-lg font-bold text-gray-900 dark:text-white">
@@ -789,234 +788,257 @@ const HomePage = () => {
               </p>
 
               <div className="space-y-3">
+
+
                 <button
                   type="button"
                   onClick={() =>
                     copyToClipboard(getRoomLink(shareRoom), "link")
                   }
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 transition-all group"
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all group ${copiedField === "link"
+                    ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                    : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750"
+                    }`}
                 >
-                  <div className="p-2 rounded-lg bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 group-hover:scale-110 transition-transform">
-                    <Link2 className="h-4 w-4" />
+                  <div className={`p-2 rounded-lg transition-all ${copiedField === "link"
+                    ? "bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400"
+                    : "bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 group-hover:scale-110"
+                    }`}>
+                    {copiedField === "link" ? (
+                      <Check className="h-4 w-4 animate-check-morph" weight="bold" />
+                    ) : (
+                      <Link2 className="h-4 w-4" weight="regular" />
+                    )}
                   </div>
                   <div className="flex-1 text-left">
-                    <span className="text-sm font-medium text-gray-900 dark:text-white block">
-                      Copy Room Link
+                    <span className={`text-sm font-medium block ${copiedField === "link" ? "text-green-700 dark:text-green-400" : "text-gray-900 dark:text-white"
+                      }`}>
+                      {copiedField === "link" ? "Copied Link!" : "Copy Room Link"}
                     </span>
                     <span className="text-xs text-gray-400 truncate block max-w-[240px]">
                       {getRoomLink(shareRoom)}
                     </span>
                   </div>
-                  {copiedField === "link" ? (
-                    <Check className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <Copy className="h-4 w-4 text-gray-400" />
-                  )}
                 </button>
 
                 <button
                   type="button"
                   onClick={() => copyToClipboard(shareRoom._id, "id")}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 transition-all group"
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all group ${copiedField === "id"
+                    ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                    : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750"
+                    }`}
                 >
-                  <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform">
-                    <QrCode className="h-4 w-4" />
+                  <div className={`p-2 rounded-lg transition-all ${copiedField === "id"
+                    ? "bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400"
+                    : "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 group-hover:scale-110"
+                    }`}>
+                    {copiedField === "id" ? (
+                      <Check className="h-4 w-4 animate-check-morph" weight="bold" />
+                    ) : (
+                      <QrCode className="h-4 w-4" weight="regular" />
+                    )}
                   </div>
                   <div className="flex-1 text-left">
-                    <span className="text-sm font-medium text-gray-900 dark:text-white block">
-                      Copy Room ID
+                    <span className={`text-sm font-medium block ${copiedField === "id" ? "text-green-700 dark:text-green-400" : "text-gray-900 dark:text-white"
+                      }`}>
+                      {copiedField === "id" ? "Copied ID!" : "Copy Room ID"}
                     </span>
                     <span className="text-xs text-gray-400 font-mono block">
                       {shareRoom._id}
                     </span>
                   </div>
-                  {copiedField === "id" ? (
-                    <Check className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <Copy className="h-4 w-4 text-gray-400" />
-                  )}
                 </button>
 
                 <button
                   type="button"
                   onClick={() => copyToClipboard(shareRoom.name, "name")}
-                  className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 transition-all group"
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all group ${copiedField === "name"
+                    ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                    : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750"
+                    }`}
                 >
-                  <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 group-hover:scale-110 transition-transform">
-                    <MessageSquare className="h-4 w-4" />
+                  <div className={`p-2 rounded-lg transition-all ${copiedField === "name"
+                    ? "bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400"
+                    : "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 group-hover:scale-110"
+                    }`}>
+                    {copiedField === "name" ? (
+                      <Check className="h-4 w-4 animate-check-morph" weight="bold" />
+                    ) : (
+                      <MessageSquare className="h-4 w-4" weight="regular" />
+                    )}
                   </div>
                   <div className="flex-1 text-left">
-                    <span className="text-sm font-medium text-gray-900 dark:text-white block">
-                      Copy Room Name
+                    <span className={`text-sm font-medium block ${copiedField === "name" ? "text-green-700 dark:text-green-400" : "text-gray-900 dark:text-white"
+                      }`}>
+                      {copiedField === "name" ? "Copied Name!" : "Copy Room Name"}
                     </span>
                     <span className="text-xs text-gray-400 block">
                       {shareRoom.name}
                     </span>
                   </div>
-                  {copiedField === "name" ? (
-                    <Check className="h-4 w-4 text-green-500" />
-                  ) : (
-                    <Copy className="h-4 w-4 text-gray-400" />
-                  )}
                 </button>
               </div>
             </div>
           </div>
         </div>
-      )}
+      )
+      }
 
-      {manageRoom && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div
-            className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm"
-            onClick={() => {
-              setManageRoom(null);
-              setConfirmDelete(false);
-              setDeleteError(null);
-            }}
-          />
-          <div className="flex items-center justify-center min-h-screen px-4">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 shadow-2xl relative z-10">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                    Manage Room
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    Update settings for {manageRoom.name}
-                  </p>
-                </div>
-                <button
-                  onClick={() => {
-                    setManageRoom(null);
-                    setConfirmDelete(false);
-                    setDeleteError(null);
-                  }}
-                  className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Room Mode
-                </label>
-                <div className="grid grid-cols-2 gap-4">
-                  <button
-                    onClick={() => handleUpdateMode(manageRoom._id, "Global")}
-                    disabled={isUpdating}
-                    className={`relative rounded-xl border-2 p-4 transition-all text-left ${manageRoom.mode === "Global"
-                      ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20"
-                      : "border-gray-100 dark:border-gray-700 hover:border-gray-300"
-                      }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <Globe
-                        className={`h-6 w-6 ${manageRoom.mode === "Global"
-                          ? "text-indigo-600"
-                          : "text-gray-400"
-                          }`}
-                      />
-                      {manageRoom.mode === "Global" && (
-                        <div className="h-2 w-2 rounded-full bg-indigo-600" />
-                      )}
-                    </div>
-                    <p className="font-semibold text-gray-900 dark:text-white">
-                      Global
+      {
+        manageRoom && (
+          <div className="fixed inset-0 z-50 overflow-y-auto">
+            <div
+              className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm"
+              onClick={() => {
+                setManageRoom(null);
+                setConfirmDelete(false);
+                setDeleteError(null);
+              }}
+            />
+            <div className="flex items-center justify-center min-h-screen px-4">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 shadow-2xl relative z-10">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                      Manage Room
+                    </h3>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      Update settings for {manageRoom.name}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">AI Translation</p>
-                  </button>
-
-                  <button
-                    onClick={() => handleUpdateMode(manageRoom._id, "Native")}
-                    disabled={isUpdating}
-                    className={`relative rounded-xl border-2 p-4 transition-all text-left ${manageRoom.mode === "Native"
-                      ? "border-green-500 bg-green-50 dark:bg-green-900/20"
-                      : "border-gray-100 dark:border-gray-700 hover:border-gray-300"
-                      }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <Zap
-                        className={`h-6 w-6 ${manageRoom.mode === "Native"
-                          ? "text-green-600"
-                          : "text-gray-400"
-                          }`}
-                      />
-                      {manageRoom.mode === "Native" && (
-                        <div className="h-2 w-2 rounded-full bg-green-500" />
-                      )}
-                    </div>
-                    <p className="font-semibold text-gray-900 dark:text-white">
-                      Native
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">Raw Speed</p>
-                  </button>
-                </div>
-              </div>
-
-              {/* Danger Zone — Delete Room (owner only) */}
-              {getUserRole(manageRoom) === "owner" && (
-                <div className="mt-6 pt-5 border-t border-gray-200 dark:border-gray-700">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                    <span className="text-sm font-semibold text-red-600 dark:text-red-400">
-                      Danger Zone
-                    </span>
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-                    Permanently delete this room and all its messages. This action cannot be undone.
-                  </p>
-
-                  {deleteError && (
-                    <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-600 dark:text-red-400 mb-3">
-                      {deleteError}
-                    </div>
-                  )}
-
-                  {!confirmDelete ? (
-                    <button
-                      type="button"
-                      onClick={() => setConfirmDelete(true)}
-                      className="w-full px-4 py-2.5 border border-red-300 dark:border-red-700 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                    >
-                      Delete Room
-                    </button>
-                  ) : (
-                    <div className="space-y-2">
-                      <p className="text-xs text-red-600 dark:text-red-400 font-medium">
-                        Are you sure? This will delete "{manageRoom.name}" and all {manageRoom.members?.length || 0} members' messages.
-                      </p>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setConfirmDelete(false);
-                            setDeleteError(null);
-                          }}
-                          disabled={isDeleting}
-                          className="flex-1 px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                        >
-                          Cancel
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteRoom(manageRoom._id)}
-                          disabled={isDeleting}
-                          className="flex-1 px-4 py-2.5 bg-red-600 rounded-xl text-sm font-medium text-white hover:bg-red-700 shadow-lg shadow-red-500/30 transition-all disabled:opacity-50"
-                        >
-                          {isDeleting ? "Deleting…" : "Yes, Delete"}
-                        </button>
-                      </div>
-                    </div>
-                  )}
+                  <button
+                    onClick={() => {
+                      setManageRoom(null);
+                      setConfirmDelete(false);
+                      setDeleteError(null);
+                    }}
+                    className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
                 </div>
-              )}
+
+                <div className="space-y-4">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Room Mode
+                  </label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <button
+                      onClick={() => handleUpdateMode(manageRoom._id, "Global")}
+                      disabled={isUpdating}
+                      className={`relative rounded-xl border-2 p-4 transition-all text-left ${manageRoom.mode === "Global"
+                        ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20"
+                        : "border-gray-100 dark:border-gray-700 hover:border-gray-300"
+                        }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <Translate
+                          className={`h-6 w-6 ${manageRoom.mode === "Global"
+                            ? "text-indigo-600"
+                            : "text-gray-400"
+                            }`}
+                        />
+                        {manageRoom.mode === "Global" && (
+                          <div className="h-2 w-2 rounded-full bg-indigo-600" />
+                        )}
+                      </div>
+                      <p className="font-semibold text-gray-900 dark:text-white">
+                        Global
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">AI Translation</p>
+                    </button>
+
+                    <button
+                      onClick={() => handleUpdateMode(manageRoom._id, "Native")}
+                      disabled={isUpdating}
+                      className={`relative rounded-xl border-2 p-4 transition-all text-left ${manageRoom.mode === "Native"
+                        ? "border-green-500 bg-green-50 dark:bg-green-900/20"
+                        : "border-gray-100 dark:border-gray-700 hover:border-gray-300"
+                        }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <ChatCircleDots
+                          className={`h-6 w-6 ${manageRoom.mode === "Native"
+                            ? "text-green-600"
+                            : "text-gray-400"
+                            }`}
+                        />
+                        {manageRoom.mode === "Native" && (
+                          <div className="h-2 w-2 rounded-full bg-green-500" />
+                        )}
+                      </div>
+                      <p className="font-semibold text-gray-900 dark:text-white">
+                        Native
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">Direct Chat</p>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Danger Zone — Delete Room (owner only) */}
+                {getUserRole(manageRoom) === "owner" && (
+                  <div className="mt-6 pt-5 border-t border-gray-200 dark:border-gray-700">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                      <span className="text-sm font-semibold text-red-600 dark:text-red-400">
+                        Danger Zone
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
+                      Permanently delete this room and all its messages. This action cannot be undone.
+                    </p>
+
+                    {deleteError && (
+                      <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-600 dark:text-red-400 mb-3">
+                        {deleteError}
+                      </div>
+                    )}
+
+                    {!confirmDelete ? (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDelete(true)}
+                        className="w-full px-4 py-2.5 border border-red-300 dark:border-red-700 rounded-xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                      >
+                        Delete Room
+                      </button>
+                    ) : (
+                      <div className="space-y-2">
+                        <p className="text-xs text-red-600 dark:text-red-400 font-medium">
+                          Are you sure? This will delete "{manageRoom.name}" and all {manageRoom.members?.length || 0} members' messages.
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setConfirmDelete(false);
+                              setDeleteError(null);
+                            }}
+                            disabled={isDeleting}
+                            className="flex-1 px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteRoom(manageRoom._id)}
+                            disabled={isDeleting}
+                            className="flex-1 px-4 py-2.5 bg-red-600 rounded-xl text-sm font-medium text-white hover:bg-red-700 shadow-lg shadow-red-500/30 transition-all disabled:opacity-50"
+                          >
+                            {isDeleting ? "Deleting…" : "Yes, Delete"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 };
 

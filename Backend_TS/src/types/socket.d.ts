@@ -20,7 +20,7 @@ export interface ClientToServerInterface {
   add_reaction: (data: { room: string; msgId: string; emoji: string }) => void;
   typing_start: (data: { room: string; author: string }) => void;
   typing_stop: (data: { room: string; author: string }) => void;
-  // leave_room: (data: {room: string; author: string}) => void;
+  leave_room: (data: { room: string }) => void;
 }
 
 

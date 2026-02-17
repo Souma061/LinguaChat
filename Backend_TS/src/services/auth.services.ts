@@ -1,4 +1,5 @@
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 import type { IUser } from '../models/user.model.ts';
 import User from '../models/user.model.ts';
@@ -18,6 +19,7 @@ interface TokenPayload {
   id: string;
   username: string;
   role: string;
+  jti?: string;
 }
 
 
@@ -78,9 +80,9 @@ export const loginUser = async (username: string, password: string, device: stri
   };
 }
 
-const generateTokens = (user: IUser): { accessToken: string; refreshToken: string } => {
+const generateTokens = (user: IUser, tokenId: string): { accessToken: string; refreshToken: string } => {
   const accessToken = generateAccessToken(user);
-  const refreshToken = generateRefreshToken(user);
+  const refreshToken = generateRefreshToken(user, tokenId);
   return { accessToken, refreshToken };
 }
 
@@ -101,7 +103,7 @@ const generateAccessToken = (user: IUser): string => {
   );
 }
 
-const generateRefreshToken = (user: IUser): string => {
+const generateRefreshToken = (user: IUser, tokenId: string): string => {
   if (!process.env.JWT_REFRESH_SECRET) {
     throw new Error("JWT_REFRESH_SECRET is not defined in environment variables");
   }
@@ -110,6 +112,7 @@ const generateRefreshToken = (user: IUser): string => {
       id: user._id,
       username: user.username,
       role: user.role,
+      jti: tokenId,
     },
     process.env.JWT_REFRESH_SECRET,
     {
@@ -131,15 +134,28 @@ export const refreshAccessToken = async (refreshToken: string): Promise<{ access
       throw new Error('User not found');
     }
 
-    // Find valid session for this refresh token
-    const sessions = await UserSession.find({ userId: user._id });
-
     let validSession = null;
-    for (const session of sessions) {
-      const isValidToken = await bcrypt.compare(refreshToken, session.hashedRefreshToken);
-      if (isValidToken && new Date() < session.expiresAt) {
-        validSession = session;
-        break;
+
+    // Fast path: look up by tokenId (jti) for O(1) session resolution
+    if (decoded.jti) {
+      const session = await UserSession.findOne({ userId: user._id, tokenId: decoded.jti });
+      if (session && new Date() < session.expiresAt) {
+        const isValidToken = await bcrypt.compare(refreshToken, session.hashedRefreshToken);
+        if (isValidToken) {
+          validSession = session;
+        }
+      }
+    }
+
+    // Fallback for legacy sessions without tokenId (will phase out as old sessions expire)
+    if (!validSession) {
+      const sessions = await UserSession.find({ userId: user._id, tokenId: { $exists: false } });
+      for (const session of sessions) {
+        const isValidToken = await bcrypt.compare(refreshToken, session.hashedRefreshToken);
+        if (isValidToken && new Date() < session.expiresAt) {
+          validSession = session;
+          break;
+        }
       }
     }
 
@@ -160,7 +176,8 @@ const createSession = async (userId: any, device: string, ip: string): Promise<{
     throw new Error('User not found');
   }
 
-  const { accessToken, refreshToken } = generateTokens(user);
+  const tokenId = crypto.randomUUID();
+  const { accessToken, refreshToken } = generateTokens(user, tokenId);
 
   // Hash the refresh token before storing
   const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
@@ -172,6 +189,7 @@ const createSession = async (userId: any, device: string, ip: string): Promise<{
   await UserSession.create({
     userId,
     hashedRefreshToken,
+    tokenId,
     device,
     ip,
     expiresAt: expiryTime

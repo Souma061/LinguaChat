@@ -22,6 +22,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { useChat } from "../../context/chatContext";
+import ThemeToggle from "../../components/ThemeToggle";
 import api from "../../services/api";
 
 interface RoomOwner {
@@ -426,6 +427,7 @@ const HomePage = () => {
                   {user?.username}
                 </span>
               </div>
+              <ThemeToggle />
               <button
                 onClick={logout}
                 className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"

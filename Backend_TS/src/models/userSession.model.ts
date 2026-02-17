@@ -3,6 +3,7 @@ import mongoose, { Document, Schema } from "mongoose";
 export interface IUserSession extends Document {
   userId: mongoose.Types.ObjectId;
   hashedRefreshToken: string;
+  tokenId?: string;
   device: string;
   ip: string;
   createdAt: Date;
@@ -18,6 +19,10 @@ const UserSessionSchema = new Schema<IUserSession>({
   hashedRefreshToken: {
     type: String,
     required: true,
+  },
+  tokenId: {
+    type: String,
+    index: true,
   },
   device: {
     type: String,

@@ -1,8 +1,10 @@
 import cors from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";
+import path from "path";
 import authRoutes from "./routes/auth.routes.ts";
 import roomRoutes from "./routes/room.routes.ts";
+import uploadRoutes from "./routes/upload.routes.ts";
 
 
 const app = express();
@@ -49,6 +51,8 @@ if (!isTestEnv) {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/rooms", roomRoutes);
+app.use("/api/upload", uploadRoutes);
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 app.get("/healthcheck", (req, res) => {
   res.status(200).json({ status: "ok" });
 })

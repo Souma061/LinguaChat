@@ -62,11 +62,23 @@ export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerT
         socket.emit("error_event", { message: "Invalid room" });
         return;
       }
+      // Leave previous room before joining a new one to prevent cross-room message pollution
+      const previousRoom = socket.data.room;
+      if (previousRoom && previousRoom !== data.room) {
+        socket.leave(previousRoom);
+        io.to(previousRoom).emit('room_users', roomMembers(previousRoom));
+      }
+
       socket.join(data.room);
       socket.data.username = username;
       socket.data.room = data.room;
       socket.data.lang = typeof data.lang === 'string' && data.lang.trim() ? data.lang : 'en';
 
+
+      // Add user to persistent room members list
+      if (socket.data.userId) {
+        await roomService.addMemberToRoom(data.room, socket.data.userId);
+      }
 
       const roomInfo = await roomService.getRoomByName(data.room);
       const isAdmin = roomInfo?.admins.some(
@@ -134,7 +146,7 @@ export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerT
       const occupants = roomMembers(data.room);
       io.to(data.room).emit("room_users", occupants);
 
-      io.to(data.room).emit("user_joined", {
+      socket.to(data.room).emit("user_joined", {
         message: `${username} joined the room`,
       });
     });
@@ -409,6 +421,18 @@ export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerT
           message: error instanceof Error ? error.message : 'Failed to add reaction',
         });
       }
+    });
+
+    socket.on("leave_room", (data) => {
+      if (!data || typeof data.room !== "string") return;
+      const room = data.room.trim();
+      if (!room) return;
+
+      socket.leave(room);
+      if (socket.data.room === room) {
+        socket.data.room = "";
+      }
+      io.to(room).emit('room_users', roomMembers(room));
     });
 
     // ── Typing Indicators (pure relay, no DB) ──

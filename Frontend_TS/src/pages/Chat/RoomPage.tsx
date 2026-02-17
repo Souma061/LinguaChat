@@ -1,9 +1,10 @@
-import { ArrowLeft, Globe, DotsThreeVertical as MoreVertical, PaperPlaneRight as Send, Users, X } from "@phosphor-icons/react";
+import { ArrowLeft, Globe, DotsThreeVertical as MoreVertical, PaperPlaneRight as Send, SpeakerHigh, SpeakerSlash, Users, X } from "@phosphor-icons/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { EmojiPicker, EmojiToggleButton } from "../../components/EmojiPicker";
 import type { MessageData } from "../../components/MessageBubble";
 import MessageBubble from "../../components/MessageBubble";
+import ThemeToggle from "../../components/ThemeToggle";
 import { useAuth } from "../../context/AuthContext";
 import { useChat } from "../../context/chatContext";
 
@@ -50,6 +51,20 @@ const RoomPage = () => {
     const base = nav.split("-")[0] as LangCode;
     return LANG_OPTIONS.some((o) => o.code === base) ? base : "en";
   });
+
+  const [isSoundEnabled, setIsSoundEnabled] = useState(() => {
+    return localStorage.getItem("linguachat.sound") !== "false";
+  });
+  const isSoundEnabledRef = useRef(isSoundEnabled);
+
+  const toggleSound = () => {
+    setIsSoundEnabled((prev) => {
+      const next = !prev;
+      isSoundEnabledRef.current = next;
+      localStorage.setItem("linguachat.sound", String(next));
+      return next;
+    });
+  };
 
   const [replyTo, setReplyTo] = useState<{
     msgId: string;
@@ -166,6 +181,25 @@ const RoomPage = () => {
 
     const onReceiveMessage = (msg: MessageData) => {
       setMessages((prev) => [...prev, msg]);
+
+      // Play sound only if enabled, not my message, and window is not focused
+      if (
+        isSoundEnabledRef.current &&
+        msg.author !== user?.username &&
+        (document.hidden || !document.hasFocus())
+      ) {
+        try {
+          const audio = new Audio(
+            "https://codeskulptor-demos.commondatastorage.googleapis.com/pang/pop.mp3"
+          );
+          audio.volume = 0.4;
+          audio.play().catch(() => {
+            // Context might prevent autoplay if not interacted
+          });
+        } catch (e) {
+          // ignore audio errors
+        }
+      }
     };
 
     const onUserJoined = () => {
@@ -256,6 +290,10 @@ const RoomPage = () => {
       socket.off("translations_ready", onTranslationsReady);
       socket.off("reaction_update", onReactionUpdate);
       socket.off("user_typing", onUserTyping);
+
+      if (roomId) {
+        socket.emit("leave_room", { room: roomId });
+      }
     };
   }, [myLang, roomId, scrollToBottom, socket, user, isConnected]);
 
@@ -510,6 +548,8 @@ const RoomPage = () => {
             </button>
           )}
 
+          <ThemeToggle />
+
           <div className="relative" ref={settingsRef}>
             <button
               type="button"
@@ -522,7 +562,27 @@ const RoomPage = () => {
 
             {isSettingsOpen && (
               <div className="absolute right-0 mt-2 w-56 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-lg overflow-hidden z-20">
-                <div className="px-4 py-3">
+                <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                      Notifications
+                    </span>
+                    <button
+                      onClick={toggleSound}
+                      className={`p-1.5 rounded-lg transition-colors ${isSoundEnabled
+                        ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400"
+                        : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
+                        }`}
+                      title={isSoundEnabled ? "Mute sounds" : "Enable sounds"}
+                    >
+                      {isSoundEnabled ? (
+                        <SpeakerHigh className="h-4 w-4" />
+                      ) : (
+                        <SpeakerSlash className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+
                   <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-2">
                     My language
                   </div>

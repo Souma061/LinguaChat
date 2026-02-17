@@ -35,6 +35,13 @@ export const updateRoomMode = async (name: string, mode: 'Global' | 'Native') =>
   return room;
 };
 
+export const addMemberToRoom = async (roomName: string, userId: string) => {
+  await Room.updateOne(
+    { name: roomName },
+    { $addToSet: { members: userId } },
+  );
+};
+
 export const deleteRoom = async (roomId: string, userId: string) => {
   const room = await Room.findById(roomId);
   if (!room) {

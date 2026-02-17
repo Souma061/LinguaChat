@@ -198,6 +198,8 @@ const RoomPage = () => {
           });
         } catch (e) {
           // ignore audio errors
+          console.error("Failed to play sound", e);
+
         }
       }
     };

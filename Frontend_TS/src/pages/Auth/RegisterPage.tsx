@@ -1,5 +1,5 @@
+import { WarningCircle as AlertCircle, SpinnerGap as Loader2, Lock, Envelope as Mail, User, UserPlus } from "@phosphor-icons/react";
 import type { AxiosError } from "axios";
-import { AlertCircle, Loader2, Lock, Mail, User, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";

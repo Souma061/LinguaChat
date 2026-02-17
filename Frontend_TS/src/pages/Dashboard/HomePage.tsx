@@ -3,22 +3,22 @@ import {
   Copy,
   Crown,
   Globe,
-  LayoutGrid,
-  Link2,
+  SquaresFour as LayoutGrid,
+  Link as Link2,
   List as ListIcon,
-  LogOut,
-  MessageSquare,
+  SignOut as LogOut,
+  ChatCircle as MessageSquare,
   Plus,
   QrCode,
-  Search,
-  Settings,
-  Share2,
+  MagnifyingGlass as Search,
+  Gear as Settings,
+  ShareNetwork as Share2,
   Shield,
-  Trash2,
+  Trash as Trash2,
   Users,
   X,
-  Zap,
-} from "lucide-react";
+  Lightning as Zap,
+} from "@phosphor-icons/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";

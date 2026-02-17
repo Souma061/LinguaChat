@@ -1,4 +1,4 @@
-import { AlertCircle, Loader2, Lock, LogIn, User } from "lucide-react";
+import { WarningCircle as AlertCircle, SpinnerGap as Loader2, Lock, SignIn as LogIn, User } from "@phosphor-icons/react";
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";

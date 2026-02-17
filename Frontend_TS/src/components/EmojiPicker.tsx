@@ -1,4 +1,4 @@
-import { Smile, X } from "lucide-react";
+import { Smiley as Smile, X } from "@phosphor-icons/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const EMOJI_DATA: Record<string, string[]> = {
@@ -251,11 +251,10 @@ const EmojiPicker = ({ onSelect, onClose, isOpen }: EmojiPickerProps) => {
             type="button"
             key={cat}
             onClick={() => setActiveCategory(cat)}
-            className={`px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
-              activeCategory === cat
+            className={`px-2.5 py-1 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${activeCategory === cat
                 ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300"
                 : "text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-400"
-            }`}
+              }`}
           >
             {cat}
           </button>
@@ -339,11 +338,10 @@ export const EmojiToggleButton = ({
   <button
     type="button"
     onClick={onClick}
-    className={`p-2 rounded-full transition-colors ${
-      isOpen
+    className={`p-2 rounded-full transition-colors ${isOpen
         ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400"
         : "text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700"
-    }`}
+      }`}
   >
     <Smile className="h-5 w-5" />
   </button>

@@ -1,4 +1,4 @@
-import { Check, Copy, Reply, SmilePlus } from "lucide-react";
+import { Check, Copy, ArrowBendUpLeft as Reply, SmileySticker as SmilePlus } from "@phosphor-icons/react";
 import { useCallback, useState } from "react";
 import { QuickReactionBar } from "./EmojiPicker";
 

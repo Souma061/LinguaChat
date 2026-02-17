@@ -1,4 +1,4 @@
-import { ArrowLeft, Globe, MoreVertical, Send, Users, X } from "lucide-react";
+import { ArrowLeft, Globe, DotsThreeVertical as MoreVertical, PaperPlaneRight as Send, Users, X } from "@phosphor-icons/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { EmojiPicker, EmojiToggleButton } from "../../components/EmojiPicker";
@@ -477,8 +477,8 @@ const RoomPage = () => {
               {roomTitle}
               <span
                 className={`px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wide border ${roomMode === "Global"
-                    ? "bg-purple-50 text-purple-600 border-purple-100 dark:bg-purple-900/20 dark:border-purple-800"
-                    : "bg-green-50 text-green-600 border-green-100 dark:bg-green-900/20 dark:border-green-800"
+                  ? "bg-purple-50 text-purple-600 border-purple-100 dark:bg-purple-900/20 dark:border-purple-800"
+                  : "bg-green-50 text-green-600 border-green-100 dark:bg-green-900/20 dark:border-green-800"
                   }`}
               >
                 {roomMode}
@@ -501,8 +501,8 @@ const RoomPage = () => {
             <button
               onClick={() => setIsNativeMode(!isNativeMode)}
               className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${!isNativeMode
-                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
-                  : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
+                ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
+                : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
                 }`}
             >
               <Globe className="h-3 w-3" />

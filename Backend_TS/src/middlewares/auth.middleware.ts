@@ -5,6 +5,7 @@ import jwt from "jsonwebtoken";
 export interface AuthenticationRequest extends Request {
   user?: {
     id: string;
+    username: string;
     role: string;
   };
 }
@@ -35,6 +36,7 @@ export const authenticateJwt = (req: AuthenticationRequest, res: Response, next:
     }
     req.user = {
       id: decoded.id as string,
+      username: decoded.username as string,
       role: decoded.role as string,
     };
     next();

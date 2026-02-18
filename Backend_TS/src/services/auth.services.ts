@@ -30,6 +30,11 @@ export const registerUser = async (username: string, email: string, password: st
     throw new Error('Username already exists');
   }
 
+  const existingEmail = await User.findOne({ email });
+  if (existingEmail) {
+    throw new Error('Email already in use');
+  }
+
   // Hash the password
   const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -40,7 +45,7 @@ export const registerUser = async (username: string, email: string, password: st
     password: hashedPassword
   });
 
-  const { accessToken, refreshToken } = await createSession(newUser._id, device, ip);
+  const { accessToken, refreshToken } = await createSession(newUser, device, ip);
 
   return {
     user: {
@@ -67,7 +72,7 @@ export const loginUser = async (username: string, password: string, device: stri
     throw new Error('Invalid username or password');
   }
 
-  const { accessToken, refreshToken } = await createSession(user._id, device, ip);
+  const { accessToken, refreshToken } = await createSession(user, device, ip);
 
   return {
     user: {
@@ -170,12 +175,7 @@ export const refreshAccessToken = async (refreshToken: string): Promise<{ access
   }
 }
 
-const createSession = async (userId: any, device: string, ip: string): Promise<{ accessToken: string; refreshToken: string }> => {
-  const user = await User.findById(userId);
-  if (!user) {
-    throw new Error('User not found');
-  }
-
+const createSession = async (user: IUser, device: string, ip: string): Promise<{ accessToken: string; refreshToken: string }> => {
   const tokenId = crypto.randomUUID();
   const { accessToken, refreshToken } = generateTokens(user, tokenId);
 
@@ -187,7 +187,7 @@ const createSession = async (userId: any, device: string, ip: string): Promise<{
 
   // Create session in database
   await UserSession.create({
-    userId,
+    userId: user._id,
     hashedRefreshToken,
     tokenId,
     device,

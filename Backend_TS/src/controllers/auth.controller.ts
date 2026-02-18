@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import { z } from "zod";
+import type { AuthenticationRequest } from "../middlewares/auth.middleware.ts";
 import * as authService from "../services/auth.services.ts";
 
 const getDeviceInfo = (req: Request): { device: string; ip: string } => {
@@ -74,7 +75,7 @@ export const logoutSession = async (req: Request, res: Response) => {
       res.status(400).json({ error: "Session ID is required" });
       return;
     }
-    const userId = (req as any).user?.id;
+    const userId = (req as AuthenticationRequest).user?.id;
     if (!userId) {
       res.status(401).json({ error: "Unauthorized" });
       return;
@@ -88,7 +89,7 @@ export const logoutSession = async (req: Request, res: Response) => {
 
 export const logoutAllSessions = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as AuthenticationRequest).user?.id;
     if (!userId) {
       res.status(401).json({ error: "Unauthorized" });
       return;
@@ -102,7 +103,7 @@ export const logoutAllSessions = async (req: Request, res: Response) => {
 
 export const getActiveSessions = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = (req as AuthenticationRequest).user?.id;
     if (!userId) {
       res.status(401).json({ error: "Unauthorized" });
       return;

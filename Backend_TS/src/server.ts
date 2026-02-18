@@ -4,26 +4,13 @@ dotenv.config();
 import { createServer } from "node:http";
 import { Server } from "socket.io";
 import app from "./app.ts";
+import { corsOrigins } from "./config/cors.ts";
 import { connectDB } from "./config/db.ts";
 import { socketAuthMiddleware } from "./middlewares/socketAuth.middleware.ts";
 import { initializeChatSocket } from "./sockets/chat.socket.ts";
 import type { ClientToServerInterface, ServerToClientInterface, SocketData } from "./types/socket.d.ts";
 
 const PORT = process.env.PORT || 5000;
-const defaultOrigins = [
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-  "http://localhost:5174",
-  "http://localhost:5175",
-  "https://linguachat-frmz.onrender.com",
-  "https://lingua-chat.vercel.app"
-];
-
-const envOrigins = process.env.CORS_ORIGINS
-  ? process.env.CORS_ORIGINS.split(",").map(o => o.trim())
-  : [];
-
-const corsOrigins = [...new Set([...envOrigins, ...defaultOrigins])].filter(Boolean);
 
 
 

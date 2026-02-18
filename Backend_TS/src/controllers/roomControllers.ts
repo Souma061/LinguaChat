@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { Room } from "../models/room.model.ts";
-import * as roomService from "../services/rom.service.ts";
+import type { AuthenticationRequest } from "../middlewares/auth.middleware.ts";
+import * as roomService from "../services/room.service.ts";
 
 
 export const getPublicRooms = async (req: Request, res: Response) => {
@@ -97,7 +98,7 @@ export const updateRoomMode = async (req: Request, res: Response) => {
     }
 
     // Auth check
-    const userId = (req as any).user?.id;
+    const userId = (req as AuthenticationRequest).user?.id;
     const isOwner = String(room.owner) === String(userId);
     const isAdmin = room.admins.some((a) => String(a) === String(userId));
 
@@ -119,7 +120,7 @@ export const updateRoomMode = async (req: Request, res: Response) => {
 export const deleteRoom = async (req: Request, res: Response) => {
   try {
     const id = String(req.params.id || "").trim();
-    const userId = (req as any).user?.id;
+    const userId = (req as AuthenticationRequest).user?.id;
 
     if (!id) {
       res.status(400).json({ error: "Room ID is required" });

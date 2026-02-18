@@ -42,7 +42,7 @@ router.get("/profile", authenticateJwt, (req: AuthenticationRequest, res) => {
     res.status(401).json({ error: "Unauthorized: No user information found" });
     return;
   }
-  res.json({ id: req.user.id, role: req.user.role });
+  res.json({ id: req.user.id, username: req.user.username, role: req.user.role });
 })
 
 export default router;

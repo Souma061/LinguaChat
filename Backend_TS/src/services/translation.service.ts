@@ -42,8 +42,13 @@ const toLocale = (code: string, fallback: string | null = null): string | null =
 };
 
 // ── Translation cache ──
-const translationCache = new Map<string, string>();
+interface CacheEntry {
+  value: string;
+  expiresAt: number;
+}
+const translationCache = new Map<string, CacheEntry>();
 const MAX_CACHE_SIZE = 1000;
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 const getCachedOrTranslate = async (
   text: string,
@@ -55,7 +60,10 @@ const getCachedOrTranslate = async (
 
   const cacheKey = `${text}:${sourceLocale ?? 'auto'}:${targetLocale}`;
   const cached = translationCache.get(cacheKey);
-  if (cached) return cached;
+  if (cached) {
+    if (Date.now() < cached.expiresAt) return cached.value;
+    translationCache.delete(cacheKey);
+  }
 
   const translated = await lingo.localizeText(text, {
     sourceLocale,
@@ -66,7 +74,7 @@ const getCachedOrTranslate = async (
   const result = translated || text;
 
   // Evict oldest entry if cache is full
-  translationCache.set(cacheKey, result);
+  translationCache.set(cacheKey, { value: result, expiresAt: Date.now() + CACHE_TTL_MS });
   if (translationCache.size > MAX_CACHE_SIZE) {
     const firstKey = translationCache.keys().next().value;
     if (firstKey) translationCache.delete(firstKey);

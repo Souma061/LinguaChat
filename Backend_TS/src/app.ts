@@ -2,6 +2,7 @@ import cors from "cors";
 import express from "express";
 import rateLimit from "express-rate-limit";
 import path from "path";
+import { corsOrigins } from "./config/cors.ts";
 import authRoutes from "./routes/auth.routes.ts";
 import roomRoutes from "./routes/room.routes.ts";
 import uploadRoutes from "./routes/upload.routes.ts";
@@ -10,22 +11,6 @@ import uploadRoutes from "./routes/upload.routes.ts";
 const app = express();
 
 const isTestEnv = process.env.NODE_ENV === "test";
-const defaultOrigins = [
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-  "http://localhost:5174",
-  "http://localhost:5175",
-  "https://linguachat-frmz.onrender.com",
-  "https://lingua-chat.vercel.app"
-];
-
-const envOrigins = process.env.CORS_ORIGINS
-  ? process.env.CORS_ORIGINS.split(",").map(o => o.trim())
-  : [];
-
-const corsOrigins = [...new Set([...envOrigins, ...defaultOrigins])].filter(Boolean);
-
-
 
 // CORS MUST be first — before rate limiter or anything else
 app.use(cors({

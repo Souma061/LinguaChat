@@ -180,7 +180,11 @@ const RoomPage = () => {
     };
 
     const onReceiveMessage = (msg: MessageData) => {
-      setMessages((prev) => [...prev, msg]);
+      setMessages((prev) => {
+        // Deduplicate by msgId to prevent duplicate messages on reconnect
+        if (prev.some((m) => m.msgId === msg.msgId)) return prev;
+        return [...prev, msg];
+      });
 
       // Play sound only if enabled, not my message, and window is not focused
       if (

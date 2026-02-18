@@ -1,12 +1,36 @@
 import { Server } from "socket.io";
 import User from "../models/user.model.ts";
 import * as chatService from "../services/chat.service.ts";
-import * as roomService from "../services/rom.service.ts";
+import * as roomService from "../services/room.service.ts";
 import * as translationService from "../services/translation.service.ts";
 import type { ClientToServerInterface, ServerToClientInterface, SocketData } from "../types/socket.d.ts";
 
 type RateEntry = { count: number; resetAt: number };
 const perSocketRate = new Map<string, Map<string, RateEntry>>();
+
+// Periodic cleanup sweep for perSocketRate to prevent unbounded growth
+setInterval(() => {
+  const now = Date.now();
+  for (const [socketId, socketMap] of perSocketRate) {
+    for (const [key, entry] of socketMap) {
+      if (now >= entry.resetAt) {
+        socketMap.delete(key);
+      }
+    }
+    if (socketMap.size === 0) {
+      perSocketRate.delete(socketId);
+    }
+  }
+}, 5 * 60_000);
+
+const sanitizeMessage = (text: string): string => {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
+};
 
 const hitRateLimit = (socketId: string, key: string, limit: number, windowMs: number): boolean => {
   const now = Date.now();
@@ -288,10 +312,11 @@ export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerT
           throw new Error("Join the room before sending messages");
         }
 
-        const message = typeof (data as any).message === "string" ? (data as any).message : "";
-        if (!message.trim()) {
+        const rawMessage = typeof (data as any).message === "string" ? (data as any).message : "";
+        if (!rawMessage.trim()) {
           throw new Error("Message cannot be empty");
         }
+        const message = sanitizeMessage(rawMessage);
         if (message.length > 2000) {
           throw new Error("Message too long");
         }

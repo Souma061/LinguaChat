@@ -4,7 +4,7 @@ const connectDB = async (): Promise<void> => {
   try {
     const mongoURI = process.env.MONGODB_URI;
     if(!mongoURI) {
-      throw new Error("MONGO_URI is not defined in environment variables");
+      throw new Error("MONGODB_URI is not defined in environment variables");
     }
   await mongoose.connect(mongoURI, {
     dbName: 'LinguaChat_V2',

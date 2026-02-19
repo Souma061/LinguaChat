@@ -65,11 +65,13 @@ const getCachedOrTranslate = async (
     translationCache.delete(cacheKey);
   }
 
+  console.time(`[translation-api] ${targetLocale}`);
   const translated = await lingo.localizeText(text, {
     sourceLocale,
     targetLocale,
     fast: true,
   });
+  console.timeEnd(`[translation-api] ${targetLocale}`);
 
   const result = translated || text;
 
@@ -90,7 +92,8 @@ const getCachedOrTranslate = async (
 export const translateText = async (
   text: string,
   sourceLang: string,
-  targetLangs: string[]
+  targetLangs: string[],
+  onChunk?: (lang: string, translated: string) => void
 ): Promise<Map<string, string>> => {
   const translations = new Map<string, string>();
   const lingo = getLingo();
@@ -114,6 +117,9 @@ export const translateText = async (
       const translated = await getCachedOrTranslate(text, sourceLocale, targetLocale);
       if (translated) {
         translations.set(lang, translated);
+        if (onChunk) {
+          onChunk(lang, translated);
+        }
       }
     } catch (error) {
       console.error(`[translation] Error translating to ${lang} (${targetLocale}):`, error);

@@ -35,7 +35,13 @@ export const register = async (req: Request, res: Response) => {
   try {
     const { username, email, password } = registerSchema.parse(req.body);
     const { device, ip } = getDeviceInfo(req);
-    const result = await authService.registerUser(username, email, password, device, ip);
+
+    let profilePicture: string | undefined;
+    if (req.file) {
+      profilePicture = req.file.path;
+    }
+
+    const result = await authService.registerUser(username, email, password, device, ip, profilePicture);
     res.status(201).json(result);
   } catch (error) {
     res.status(400).json({ error: error instanceof Error ? error.message : 'An unknown error occurred' });

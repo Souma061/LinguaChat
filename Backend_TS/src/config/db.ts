@@ -17,7 +17,7 @@ const connectDB = async (): Promise<void> => {
     console.error("Error connecting to MongoDB:", error);
     process.exit(1);
   }
-};
+}; 
 
 const disconnectDB = async (): Promise<void> => {
   try {

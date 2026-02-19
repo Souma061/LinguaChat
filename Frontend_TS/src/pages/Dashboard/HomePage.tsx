@@ -20,9 +20,9 @@ import {
 } from "@phosphor-icons/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import ThemeToggle from "../../components/ThemeToggle";
 import { useAuth } from "../../context/AuthContext";
 import { useChat } from "../../context/chatContext";
-import ThemeToggle from "../../components/ThemeToggle";
 import api from "../../services/api";
 
 interface RoomOwner {
@@ -420,8 +420,16 @@ const HomePage = () => {
 
             <div className="flex items-center gap-4">
               <div className="hidden sm:flex items-center gap-3 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 rounded-full">
-                <div className="h-8 w-8 rounded-full bg-linear-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-medium shadow-md">
-                  {user?.username.charAt(0).toUpperCase()}
+                <div className="h-8 w-8 rounded-full bg-linear-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-medium shadow-md overflow-hidden">
+                  {user?.profilePicture ? (
+                    <img
+                      src={user.profilePicture}
+                      alt={user.username}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    user?.username.charAt(0).toUpperCase()
+                  )}
                 </div>
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-200 pr-2">
                   {user?.username}

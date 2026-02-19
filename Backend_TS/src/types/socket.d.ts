@@ -30,6 +30,7 @@ export interface ServerToClientInterface {
     original: string;
     message: string;
     author: string;
+    authorProfilePicture?: string;
     time: string;
     msgId: string;
     lang: string;
@@ -43,7 +44,7 @@ export interface ServerToClientInterface {
   }) => void;
 
   room_history: (data: any[]) => void;
-  room_users: (data: { id: string; username: string; lang: string; status: 'online' }[]) => void;
+  room_users: (data: { id: string; username: string; profilePicture?: string; lang: string; status: 'online' }[]) => void;
   message_status: (data: { msgId: string; status: 'sent' | 'failed'; error?: string }) => void;
   reaction_update: (data: { msgId: string; reactions: Record<string, string[]> }) => void;
   error_event: (data: { message: string }) => void;
@@ -56,9 +57,9 @@ export interface ServerToClientInterface {
 
 // data stored in socket instance
 export interface SocketData {
-
   username: string;
   lang: string;
   room: string;
   userId?: string;
+  profilePicture?: string;
 }

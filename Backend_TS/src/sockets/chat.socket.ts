@@ -56,10 +56,14 @@ const hitRateLimit = (socketId: string, key: string, limit: number, windowMs: nu
 
 export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerToClientInterface, {}, SocketData>) => {
   io.on("connection", async (socket) => {
-    const user = await User.findById(socket.data.userId).select("username").exec();
+    const user = await User.findById(socket.data.userId).select("username profilePicture").exec();
     const username = user ? user.username : "Unknown User";
+    const profilePicture = user ? user.profilePicture : undefined;
 
     socket.data.username = username;
+    if (profilePicture) {
+      socket.data.profilePicture = profilePicture;
+    }
 
 
 
@@ -68,12 +72,18 @@ export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerT
       const ids = Array.from(io.sockets.adapter.rooms.get(room) ?? []);
       return ids.map((id) => {
         const s = io.sockets.sockets.get(id);
-        return {
+        const memberData = {
           id,
           username: String(s?.data?.username ?? 'Anonymous'),
           lang: String(s?.data?.lang ?? 'en'),
           status: 'online' as const,
-        };
+        } as { id: string; username: string; lang: string; status: 'online'; profilePicture?: string };
+
+        if (s?.data?.profilePicture) {
+          memberData.profilePicture = s.data.profilePicture;
+        }
+
+        return memberData;
       });
     };
 
@@ -147,8 +157,12 @@ export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerT
             }
           }
 
+          // Fetch author's profile picture if possible (optimization: could bulk fetch authors)
+          const authorUser = await User.findOne({ username: m.author }).select("profilePicture");
+
           return {
             author: m.author,
+            ...(authorUser?.profilePicture ? { authorProfilePicture: authorUser.profilePicture } : {}),
             message: translations[userLang] ?? m.original,
             original: m.original,
             time: (m.createdAt instanceof Date ? m.createdAt.toISOString() : String(m.createdAt ?? '')),
@@ -352,6 +366,7 @@ export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerT
 
         io.to(room).emit("receive_message", {
           author: savedMessage.author,
+          ...(socket.data.profilePicture ? { authorProfilePicture: socket.data.profilePicture } : {}),
           message: savedMessage.original,
           original: savedMessage.original,
           time: savedMessage.createdAt.toISOString(),
@@ -362,22 +377,27 @@ export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerT
           reactions: {},
         });
 
-        // ── STEP 3: Translate in background, then push translations ──
+        // ── STEP 3: Translate in background, stream translations as they arrive ──
         if (isGlobalMode) {
           chatService.translateAndUpdate(
             savedMessage.msgId,
             room,
             message,
             sourceLocale,
-          ).then((translations) => {
-            // Emit translations to all users in the room
-            io.to(room).emit("translations_ready", {
-              msgId: savedMessage.msgId,
-              translations,
-            });
+            (lang, translated) => {
+              // Stream individual translation chunk immediately
+              io.to(room).emit("translations_ready", {
+                msgId: savedMessage.msgId,
+                translations: { [lang]: translated },
+              });
+            }
+          ).then((finalTranslations) => {
+            // Optional: emit final complete set just in case, or rely on chunks.
+            // Since we streamed chunks, clients should be up to date.
+            // But we can log success.
           }).catch((err) => {
             console.error(`[chat] Background translation failed for ${savedMessage.msgId}:`, err);
-            io.to(room).emit("error_event", {
+            socket.emit("error_event", {
               message: "Translation unavailable. Showing original message.",
             });
           });

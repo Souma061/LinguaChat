@@ -10,6 +10,7 @@ interface AuthService {
     id: string;
     username: string;
     role: 'user' | 'admin';
+    profilePicture?: string;
   };
   accessToken: string;
   refreshToken: string;
@@ -23,7 +24,7 @@ interface TokenPayload {
 }
 
 
-export const registerUser = async (username: string, email: string, password: string, device: string = 'Unknown Device', ip: string = '0.0.0.0'): Promise<AuthService> => {
+export const registerUser = async (username: string, email: string, password: string, device: string = 'Unknown Device', ip: string = '0.0.0.0', profilePicture?: string): Promise<AuthService> => {
   // Check if user already exists
   const existingUser = await User.findOne({ username });
   if (existingUser) {
@@ -39,11 +40,17 @@ export const registerUser = async (username: string, email: string, password: st
   const hashedPassword = await bcrypt.hash(password, 10);
 
   // Create new user
-  const newUser = await User.create({
+  const userData: Partial<IUser> = {
     username,
     email,
     password: hashedPassword
-  });
+  };
+
+  if (profilePicture) {
+    userData.profilePicture = profilePicture;
+  }
+
+  const newUser = await User.create(userData);
 
   const { accessToken, refreshToken } = await createSession(newUser, device, ip);
 
@@ -51,7 +58,8 @@ export const registerUser = async (username: string, email: string, password: st
     user: {
       id: newUser._id.toString(),
       username: newUser.username,
-      role: newUser.role || 'user'
+      role: newUser.role || 'user',
+      profilePicture: newUser.profilePicture
     },
     accessToken,
     refreshToken,
@@ -78,7 +86,8 @@ export const loginUser = async (username: string, password: string, device: stri
     user: {
       id: user._id.toString(),
       username: user.username,
-      role: user.role || 'user'
+      role: user.role || 'user',
+      profilePicture: user.profilePicture
     },
     accessToken,
     refreshToken,

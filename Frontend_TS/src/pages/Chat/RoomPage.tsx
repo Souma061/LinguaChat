@@ -23,6 +23,7 @@ const LANG_OPTIONS: { code: LangCode; label: string }[] = [
 interface RoomUser {
   id: string;
   username: string;
+  profilePicture?: string;
   lang: string;
   status: "online";
 }
@@ -530,7 +531,18 @@ const RoomPage = () => {
             </h1>
             <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
               <Users className="h-3 w-3" />
-              {isConnected ? `${roomUsers.length} online` : "Disconnected"}
+              <div className="flex -space-x-1.5 overflow-hidden">
+                {roomUsers.slice(0, 5).map((u) => (
+                  <div key={u.id} title={u.username} className="inline-block h-4 w-4 rounded-full ring-1 ring-white dark:ring-gray-900 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-[8px] overflow-hidden">
+                    {u.profilePicture ? (
+                      <img src={u.profilePicture} alt={u.username} className="h-full w-full object-cover" />
+                    ) : (
+                      u.username.charAt(0).toUpperCase()
+                    )}
+                  </div>
+                ))}
+              </div>
+              {isConnected ? (roomUsers.length > 5 ? `+${roomUsers.length - 5} online` : `${roomUsers.length} online`) : "Disconnected"}
             </p>
             {lastError && (
               <p className="text-[11px] text-gray-500 dark:text-gray-400 truncate max-w-55">

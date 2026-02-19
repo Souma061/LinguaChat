@@ -6,6 +6,7 @@ export interface IUser extends Document {
   email: string;
   password: string;
   role: 'user' | 'admin';
+  profilePicture: string;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -29,7 +30,10 @@ const UserSchema = new Schema<IUser>({
     type: String,
     enum: ['user', 'admin'],
     default: 'user',
-
+  },
+  profilePicture: {
+    type: String,
+    default: "https://res.cloudinary.com/demo/image/upload/v1584462242/avatar_default.jpg" // You can change this to a default image url
   }
 }, {
   timestamps: true,

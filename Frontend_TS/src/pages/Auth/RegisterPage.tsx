@@ -1,4 +1,4 @@
-import { WarningCircle as AlertCircle, SpinnerGap as Loader2, Lock, Envelope as Mail, User, UserPlus } from "@phosphor-icons/react";
+import { WarningCircle as AlertCircle, Image as ImageIcon, SpinnerGap as Loader2, Lock, Envelope as Mail, User, UserPlus } from "@phosphor-icons/react";
 import type { AxiosError } from "axios";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -10,6 +10,7 @@ const RegisterPage = () => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [email, setEmail] = useState("");
+  const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -50,10 +51,18 @@ const RegisterPage = () => {
     setIsLoading(true);
 
     try {
-      const response = await api.post("/auth/register", {
-        username,
-        email,
-        password,
+      const formData = new FormData();
+      formData.append("username", username);
+      formData.append("email", email);
+      formData.append("password", password);
+      if (profilePicture) {
+        formData.append("profilePicture", profilePicture);
+      }
+
+      const response = await api.post("/auth/register", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
 
       const { accessToken, refreshToken, user } = response.data;
@@ -157,6 +166,27 @@ const RegisterPage = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   className="block w-full pl-9 pr-3 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg leading-5 bg-white dark:bg-slate-700/50 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all duration-200 shadow-sm hover:border-indigo-400"
                   placeholder="Min. 6 characters"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                Profile Picture (Optional)
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <ImageIcon className="h-4 w-4 text-gray-400" />
+                </div>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setProfilePicture(e.target.files[0]);
+                    }
+                  }}
+                  className="block w-full pl-9 pr-3 py-2.5 border border-gray-300 dark:border-slate-600 rounded-lg leading-5 bg-white dark:bg-slate-700/50 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition-all duration-200 shadow-sm hover:border-indigo-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-slate-600 dark:file:text-white"
                 />
               </div>
             </div>

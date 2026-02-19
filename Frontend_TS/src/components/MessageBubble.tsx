@@ -11,6 +11,7 @@ interface ReplyTo {
 export interface MessageData {
   msgId: string;
   author: string;
+  authorProfilePicture?: string;
   message: string;
   original?: string;
   time: string;
@@ -74,12 +75,20 @@ const MessageBubble = ({
         {/* Avatar */}
         {!isMe && (
           <div
-            className={`shrink-0 h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium select-none ${showAvatar
+            className={`shrink-0 h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium select-none overflow-hidden ${showAvatar
               ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900 dark:text-indigo-300"
               : "opacity-0"
               }`}
           >
-            {msg.author.charAt(0).toUpperCase()}
+            {msg.authorProfilePicture ? (
+              <img
+                src={msg.authorProfilePicture}
+                alt={msg.author}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              msg.author.charAt(0).toUpperCase()
+            )}
           </div>
         )}
 

@@ -29,6 +29,7 @@ export interface SocketMessagePayload {
   original: string;
   message: string;
   author: string;
+  authorProfilePicture?: string;
   time: string;
   msgId: string;
   lang: string;
@@ -45,7 +46,7 @@ export interface SocketMessagePayload {
 export interface ServerToClientInterface {
   receive_message: (data: SocketMessagePayload) => void;
   room_history: (data: SocketMessagePayload[]) => void;
-  room_users: (data: { id: string; username: string; lang: string; status: 'online' }[]) => void;
+  room_users: (data: { id: string; username: string; profilePicture?: string; lang: string; status: 'online' }[]) => void;
   message_status: (data: { msgId: string; status: 'sent' | 'failed'; error?: string }) => void;
   reaction_update: (data: { msgId: string; reactions: Record<string, string[]> }) => void;
   error_event: (data: { message: string }) => void;

@@ -41,14 +41,18 @@ export const translateAndUpdate = async (
   room: string,
   text: string,
   sourceLocale: string,
+  onChunk?: (lang: string, translated: string) => void
 ): Promise<Record<string, string>> => {
   console.log(`[chat] ⏳ Translating "${text.substring(0, 30)}..." from "${sourceLocale}" to [${SUPPORTED_LANGUAGES.join(', ')}]`);
 
+  console.time(`[chat-total-translation] ${msgId}`);
   const translationMap = await translationService.translateText(
     text,
     sourceLocale,
     SUPPORTED_LANGUAGES,
+    onChunk
   );
+  console.timeEnd(`[chat-total-translation] ${msgId}`);
 
   console.log(`[chat] ✅ Got ${translationMap.size} translations: [${Array.from(translationMap.keys()).join(', ')}]`);
 

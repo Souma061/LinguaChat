@@ -1,11 +1,11 @@
 import {
-    createContext,
-    useCallback,
-    useContext,
-    useEffect,
-    useMemo,
-    useState,
-    type ReactNode,
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
 } from "react";
 import api from "../services/api";
 
@@ -13,6 +13,7 @@ interface User {
   id: string;
   username: string;
   role: string;
+  profilePicture?: string;
 }
 
 interface AuthContextType {

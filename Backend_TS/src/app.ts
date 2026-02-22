@@ -38,7 +38,10 @@ app.use("/api/auth", authRoutes);
 app.use("/api/rooms", roomRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
-app.get("/healthcheck", (req, res) => {
-  res.status(200).json({ status: "ok" });
-})
+
+// Health check endpoint for Docker / load balancers
+app.get("/api/health", (_req, res) => {
+  res.status(200).json({ status: "ok", uptime: process.uptime() });
+});
+
 export default app;

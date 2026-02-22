@@ -1,0 +1,22 @@
+services:
+  backend:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./Backend_TS:/app
+      - /app/node_modules
+    ports:
+      - "5000:5000"
+    command: sh -c "npm install --legacy-peer-deps && npm run dev"
+    env_file:
+      - ./Backend_TS/.env
+
+  frontend:
+    image: node:20-alpine
+    working_dir: /app
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./Frontend_TS:/app
+      - /app/node_modules
+    command: sh -c "npm install --legacy-peer-deps && npm run dev -- --host"

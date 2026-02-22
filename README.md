@@ -165,14 +165,83 @@ LinguaChat/
 - **MongoDB** — local instance or [MongoDB Atlas](https://www.mongodb.com/atlas) (free tier)
 - **Lingo.dev API Key** — get one at [lingo.dev](https://lingo.dev)
 
-### 1. Clone the repository
+---
+
+### 🐳 Option A — Run with Docker (Recommended)
+
+The fastest way to get everything running. Only requires **Docker** installed.
+
+#### 1. Clone the repository
 
 ```bash
 git clone https://github.com/Souma061/LinguaChat.git
 cd LinguaChat
 ```
 
-### 2. Backend Setup
+#### 2. Create the backend `.env` file
+
+```bash
+cp Backend_TS/.env.example Backend_TS/.env
+```
+
+Edit `Backend_TS/.env` and fill in your credentials:
+
+```env
+LINGO_API_KEY=your_lingo_api_key
+PORT=5000
+MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/
+JWT_SECRET=your_jwt_secret
+JWT_REFRESH_SECRET=your_refresh_secret
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+CORS_ORIGINS=http://localhost
+```
+
+> **Need API keys?**
+>
+> - Lingo.dev — sign up at [lingo.dev](https://lingo.dev) (free tier available)
+> - MongoDB Atlas — create a free cluster at [mongodb.com/atlas](https://www.mongodb.com/atlas)
+> - Cloudinary — sign up at [cloudinary.com](https://cloudinary.com) (free tier)
+
+#### 3. Build and run
+
+```bash
+docker compose up --build -d
+```
+
+#### 4. Open in browser
+
+| Service  | URL                                                |
+| -------- | -------------------------------------------------- |
+| Frontend | **[http://localhost](http://localhost)**           |
+| Backend  | **[http://localhost:5000](http://localhost:5000)** |
+
+#### Stop / restart
+
+```bash
+docker compose down       # stop
+docker compose up -d      # restart (without rebuilding)
+docker compose up --build -d  # restart with rebuild
+```
+
+---
+
+### 🖥️ Option B — Run without Docker
+
+#### Prerequisites
+
+- **Node.js** 18+ (recommended: 22)
+- **npm** (comes with Node.js)
+
+#### 1. Clone the repository
+
+```bash
+git clone https://github.com/Souma061/LinguaChat.git
+cd LinguaChat
+```
+
+#### 2. Backend Setup
 
 ```bash
 cd Backend_TS
@@ -184,9 +253,12 @@ Create a `.env` file:
 ```env
 LINGO_API_KEY=your_lingo_api_key
 PORT=5000
-MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/LinguaChat
+MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/
 JWT_SECRET=your_jwt_secret
 JWT_REFRESH_SECRET=your_refresh_secret
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
 CORS_ORIGINS=http://localhost:5173,http://localhost:5174
 ```
 
@@ -198,7 +270,7 @@ npm run dev
 
 > Backend runs on `http://localhost:5000`
 
-### 3. Frontend Setup
+#### 3. Frontend Setup
 
 ```bash
 cd Frontend_TS
@@ -366,8 +438,8 @@ This ensures messages appear instantly while translations arrive within seconds.
 
 ## 📸 Screenshots
 
-| Landing Screen                             | Demo Room                                      | Cross-Language Chat                                             |
-| ------------------------------------------ | ---------------------------------------------- | --------------------------------------------------------------- |
+| Landing Screen                             | Demo Room                                      | Cross-Language Chat                                       |
+| ------------------------------------------ | ---------------------------------------------- | --------------------------------------------------------- |
 | ![Landing](assets/screenshots/Landing.jpg) | ![Demo Room](assets/screenshots/Demo_Room.jpg) | ![Multilingual Chat](assets/screenshots/multilingual.jpg) |
 
 ---

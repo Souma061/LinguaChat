@@ -1,0 +1,50 @@
+services:
+  backend:
+    build:
+      context: ./Backend_TS
+      dockerfile: Dockerfile
+    container_name: linguachat_backend
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./Backend_TS/.env
+    environment:
+      NODE_ENV: production
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:5000/api/health",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - linguachat
+
+  frontend:
+    build:
+      context: ./Frontend_TS
+      dockerfile: Dockerfile
+      args:
+        VITE_BACKEND_URL: http://localhost:5000/api
+        VITE_SOCKET_URL: http://localhost:5000
+    container_name: linguachat_frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - linguachat
+
+networks:
+  linguachat:
+    driver: bridge

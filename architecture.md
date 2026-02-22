@@ -1,347 +1,327 @@
-# 🏗️ LinguaChat — Architecture & Bug Report
+# LinguaChat Architecture (Current State)
 
-## 📖 What Is This?
+This document reflects the implementation currently in this repository (`Backend_TS` + `Frontend_TS`), not an aspirational design.
 
-**LinguaChat** is a full-stack, real-time multilingual chat application built for the **Lingo.dev Hackathon**. Users speaking different languages can join the same room and communicate effortlessly — every message is automatically translated into each participant's preferred language using the **Lingo.dev AI** translation engine.
+## 1. System Overview
 
-**Live Demo:** [lingua-chat.vercel.app](https://lingua-chat.vercel.app)
+LinguaChat is a real-time multilingual chat app with:
 
----
+- JWT-authenticated REST APIs for auth and room metadata
+- JWT-authenticated Socket.IO for room chat and live presence
+- MongoDB persistence for users, sessions, rooms, and messages
+- Lingo.dev translation engine for asynchronous multilingual delivery
+- Optional profile image upload at registration (Cloudinary)
+- Optional image upload endpoint (local disk under `/uploads`)
 
-## 🧰 Tech Stack
-
-| Layer        | Technologies                                                    |
-| ------------ | --------------------------------------------------------------- |
-| **Frontend** | React 19, TypeScript, Vite 7, Tailwind CSS 4, Socket.IO Client |
-| **Backend**  | Node.js, Express 5, TypeScript, Socket.IO 4, Mongoose 9        |
-| **AI**       | Lingo.dev SDK — AI-powered translation engine                   |
-| **Database** | MongoDB Atlas with Mongoose ODM                                 |
-| **Auth**     | JWT (access + refresh tokens), bcrypt password hashing          |
-| **Validation** | Zod schemas (server-side)                                     |
-| **Testing**  | Jest, Supertest, MongoDB Memory Server                          |
-| **Deploy**   | Vercel (frontend), Render (backend)                             |
-
----
-
-## 🏛️ High-Level Architecture
+High-level runtime:
 
 ```
-┌──────────────────────────┐         ┌──────────────────────────────────┐
-│      Frontend (SPA)      │         │        Backend (Node.js)         │
-│   React 19 + Vite 7      │◄──────►│   Express 5 + Socket.IO 4        │
-│   Tailwind CSS 4          │  REST   │                                  │
-│   Socket.IO Client        │◄──────►│   JWT Auth Middleware             │
-│                            │ WS     │   Rate Limiting                  │
-│   Deployed: Vercel         │        │   Deployed: Render               │
-└──────────────────────────┘         └────────────┬─────────────────────┘
-                                                  │
-                                     ┌────────────▼─────────────────────┐
-                                     │        MongoDB Atlas              │
-                                     │   Users, Rooms, Messages,         │
-                                     │   Sessions                        │
-                                     └────────────┬─────────────────────┘
-                                                  │
-                                     ┌────────────▼─────────────────────┐
-                                     │        Lingo.dev SDK              │
-                                     │   AI Translation Engine           │
-                                     │   (with in-memory cache)          │
-                                     └──────────────────────────────────┘
+React SPA (Vite, Tailwind, Router)
+        |
+        | REST (Axios + Bearer token)
+        v
+Express 5 app ---------------------> MongoDB (Mongoose)
+        |
+        | Socket.IO (auth middleware + typed events)
+        v
+Socket handlers (rooms, messaging, reactions, typing)
+        |
+        | async translation calls
+        v
+Lingo.dev SDK (cached with TTL in-memory)
 ```
 
----
-
-## 📁 Project Structure
+## 2. Repository Architecture
 
 ```
-LinguaChat/
-├── Backend_TS/                     # Node.js + Express + Socket.IO server
+.
+├── Backend_TS/
 │   ├── src/
-│   │   ├── server.ts               # Entry point — HTTP server + Socket.IO setup
-│   │   ├── app.ts                  # Express app — CORS, rate limiting, routes
+│   │   ├── server.ts                    # dotenv + DB connect + HTTP + Socket.IO bootstrap
+│   │   ├── app.ts                       # Express middleware, routes, /api/health
 │   │   ├── config/
-│   │   │   ├── db.ts               # MongoDB connection (Mongoose)
-│   │   │   ├── env.ts              # dotenv loader (unused — see bugs)
-│   │   │   └── multer.config.ts    # File upload config (dead code — see bugs)
+│   │   │   ├── db.ts                    # Mongoose connection helpers
+│   │   │   ├── cors.ts                  # Shared CORS origin resolution
+│   │   │   ├── cloudinary.ts            # Cloudinary config for profile uploads
+│   │   │   └── multer.config.ts         # Disk upload config for /api/upload
 │   │   ├── controllers/
-│   │   │   ├── auth.controller.ts  # Register, login, token refresh, sessions
-│   │   │   ├── roomControllers.ts  # Room CRUD (list, search, mode update, delete)
-│   │   │   └── upload.controller.ts# Image upload handler (dead code — see bugs)
+│   │   │   ├── auth.controller.ts
+│   │   │   ├── roomControllers.ts
+│   │   │   └── upload.controller.ts
 │   │   ├── middlewares/
-│   │   │   ├── auth.middleware.ts   # JWT auth for REST routes
-│   │   │   └── socketAuth.middleware.ts # JWT auth for WebSocket connections
+│   │   │   ├── auth.middleware.ts
+│   │   │   ├── socketAuth.middleware.ts
+│   │   │   └── uploadMiddleware.ts      # Cloudinary multer middleware
 │   │   ├── models/
-│   │   │   ├── user.model.ts       # User schema (username, email, password, role)
-│   │   │   ├── room.model.ts       # Room schema (owner, admins, members, mode)
-│   │   │   ├── message.model.ts    # Message schema (translations, reactions, replies)
-│   │   │   └── userSession.model.ts# Session tracking (hashed refresh tokens, TTL)
+│   │   │   ├── user.model.ts
+│   │   │   ├── userSession.model.ts
+│   │   │   ├── room.model.ts
+│   │   │   └── message.model.ts
 │   │   ├── routes/
-│   │   │   ├── auth.routes.ts      # /api/auth/* endpoints + per-route rate limits
-│   │   │   ├── room.routes.ts      # /api/rooms/* endpoints
-│   │   │   └── upload.routes.ts    # /api/upload endpoint (never registered — see bugs)
+│   │   │   ├── auth.routes.ts
+│   │   │   ├── room.routes.ts
+│   │   │   └── upload.routes.ts
 │   │   ├── services/
-│   │   │   ├── auth.services.ts    # Auth business logic (register, login, sessions)
-│   │   │   ├── chat.service.ts     # Message save, translate, history retrieval
-│   │   │   ├── rom.service.ts      # Room business logic (typo — see bugs)
-│   │   │   └── translation.service.ts # Lingo.dev SDK integration + in-memory cache
-│   │   ├── sockets/
-│   │   │   └── chat.socket.ts      # All real-time event handlers + per-socket rate limits
-│   │   └── types/
-│   │       └── socket.d.ts         # Socket.IO type definitions (backend)
-│   ├── tests/                      # Jest test suites
-│   ├── package.json
-│   └── tsconfig.json
-│
-├── Frontend_TS/                    # React 19 + Vite SPA
+│   │   │   ├── auth.services.ts
+│   │   │   ├── room.service.ts
+│   │   │   ├── chat.service.ts
+│   │   │   └── translation.service.ts
+│   │   ├── sockets/chat.socket.ts
+│   │   └── types/socket.d.ts
+│   └── tests/                           # Jest + Supertest + socket integration tests
+├── Frontend_TS/
 │   ├── src/
-│   │   ├── main.tsx                # App entry point (StrictMode + root render)
-│   │   ├── App.tsx                 # BrowserRouter + route definitions
+│   │   ├── main.tsx
+│   │   ├── App.tsx                      # Routes + providers
 │   │   ├── context/
-│   │   │   ├── AuthContext.tsx      # Auth state, token management, auto-refresh
-│   │   │   └── chatContext.tsx      # Socket.IO connection lifecycle management
-│   │   ├── components/
-│   │   │   ├── MessageBubble.tsx    # Chat message bubble with reactions & replies
-│   │   │   ├── EmojiPicker.tsx      # Emoji selection component + quick reactions
-│   │   │   └── ProtectedRoute.tsx   # Auth guard (redirects to /login if not authed)
+│   │   │   ├── AuthContext.tsx
+│   │   │   ├── chatContext.tsx
+│   │   │   └── ThemeContext.tsx
 │   │   ├── pages/
-│   │   │   ├── Auth/
-│   │   │   │   ├── LoginPage.tsx    # Login form with validation
-│   │   │   │   └── RegisterPage.tsx # Registration form with validation
-│   │   │   ├── Dashboard/
-│   │   │   │   └── HomePage.tsx     # Room list, create/join/delete/share rooms
-│   │   │   └── Chat/
-│   │   │       └── RoomPage.tsx     # Full chat interface (messages, typing, reactions)
-│   │   ├── services/
-│   │   │   └── api.ts              # Axios instance with auth interceptor
-│   │   └── types/
-│   │       └── socket.ts           # Socket.IO event type definitions (frontend)
-│   ├── vercel.json                 # SPA rewrite rules for Vercel deployment
-│   ├── vite.config.ts
-│   └── package.json
-│
-├── architecture.md                 # ← You are here
-└── README.md
+│   │   │   ├── Auth/LoginPage.tsx
+│   │   │   ├── Auth/RegisterPage.tsx
+│   │   │   ├── Dashboard/HomePage.tsx
+│   │   │   └── Chat/RoomPage.tsx
+│   │   ├── components/                  # Message bubble, emoji picker, protected route, etc.
+│   │   ├── services/api.ts              # Axios instance + auth header interceptor
+│   │   └── types/socket.ts
+│   ├── Dockerfile
+│   └── nginx.conf
+├── docker-compose.yml                   # production-like local run
+└── docker-compose.dev.yml               # live-reload dev run
 ```
 
----
+## 3. Backend Architecture
 
-## 🔄 Core Data Flows
+### 3.1 Express API Layer
 
-### Authentication Flow
+`Backend_TS/src/app.ts`:
 
-```
-Client                          Server                         MongoDB
-  │                                │                              │
-  │── POST /auth/register ────────►│                              │
-  │                                │── Check username unique ────►│
-  │                                │◄── Result ──────────────────│
-  │                                │── bcrypt.hash(password) ───►│ (CPU)
-  │                                │── Create User ──────────────►│
-  │                                │── Generate JWT pair          │
-  │                                │── bcrypt.hash(refreshToken)─►│ (CPU)
-  │                                │── Create UserSession ───────►│
-  │◄── { accessToken,             │                              │
-  │      refreshToken, user } ────│                              │
-  │                                │                              │
-  │   (stored in localStorage)     │                              │
-```
+- Enables CORS using `corsOrigins` from `config/cors.ts`
+- Parses JSON request bodies
+- Applies global rate limiting (skipped for test env)
+- Mounts route groups:
+  - `/api/auth`
+  - `/api/rooms`
+  - `/api/upload`
+- Serves static uploaded files from `/uploads`
+- Exposes health endpoint at `/api/health`
 
-- **Access token**: JWT, 24h expiry, signed with `JWT_SECRET`
-- **Refresh token**: JWT, 7d expiry, signed with `JWT_REFRESH_SECRET`, bcrypt-hashed in DB
-- **Auto-refresh**: Frontend runs a 23-hour interval to refresh the access token
+### 3.2 Auth + Session Model
 
-### Two-Phase Message Delivery
+Auth flow uses:
 
-```
-Sender          Socket.IO Server         Lingo.dev API        MongoDB
-  │                    │                       │                  │
-  │── send_message ───►│                       │                  │
-  │                    │── Save (empty         │                  │
-  │                    │   translations) ─────────────────────────►│
-  │                    │                       │                  │
-  │                    │── PHASE 1: Broadcast  │                  │
-  │◄── receive_message │   original text to    │                  │
-  │   (instant)        │   all room members    │                  │
-  │                    │                       │                  │
-  │                    │── PHASE 2: Translate ─►│                  │
-  │                    │   to all 7 languages   │                  │
-  │                    │◄── translations ──────│                  │
-  │                    │── Update DB ─────────────────────────────►│
-  │                    │                       │                  │
-  │◄── translations_   │                       │                  │
-  │    ready (async)   │                       │                  │
-```
+- Access token: JWT (`24h`, `JWT_SECRET`)
+- Refresh token: JWT (`7d`, `JWT_REFRESH_SECRET`)
+- Refresh sessions stored in `UserSession` with:
+  - `hashedRefreshToken` (bcrypt hash)
+  - `tokenId` (`jti`) for direct lookup
+  - `device`, `ip`, `expiresAt`
+- Session cleanup via Mongo TTL index on `expiresAt`
 
-### Room Join Flow
+`refreshAccessToken` uses:
 
-1. Client emits `join_Room` with `{ room, lang }`
-2. Server joins the socket to the room via `socket.join(room)`
-3. Server fetches room info from DB → emits `room_info` (mode, isAdmin)
-4. Server fetches last 50 messages → translates on-the-fly for missing languages → emits `room_history`
-5. Server broadcasts updated `room_users` list to all members
+- Fast path: lookup by `jti` (`tokenId`) + bcrypt verify
+- Legacy fallback: compare against sessions without `tokenId`
 
----
+### 3.3 Room + Messaging Model
 
-## 🗄️ Database Models
+- Rooms have owner/admin/member relationships and mode:
+  - `Global`: async translation pipeline enabled
+  - `Native`: messages delivered without translation enrichment
+- Messages store:
+  - `original` text
+  - `sourceLocale`
+  - `translations` map
+  - `reactions` map (`emoji -> usernames[]`)
+  - optional `replyTo`
+  - unique `msgId` (client-generated)
 
-| Model           | Key Fields                                                    | Indexes                                         |
-| --------------- | ------------------------------------------------------------- | ------------------------------------------------ |
-| **User**        | `username` (unique), `email` (unique), `password`, `role`     | `username`, `email` (unique)                     |
-| **Room**        | `name` (unique), `owner`, `admins[]`, `members[]`, `mode`     | `name` (unique)                                  |
-| **Message**     | `room`, `author`, `original`, `translations`, `msgId`, `reactions`, `replyTo` | `room`, `{room, createdAt}` (compound), `msgId` (unique) |
-| **UserSession** | `userId`, `hashedRefreshToken`, `device`, `ip`, `expiresAt`   | `expiresAt` (TTL auto-delete)                    |
+### 3.4 Socket Layer
 
----
+`Backend_TS/src/server.ts`:
 
-## 🔌 Socket Events
+- Creates HTTP server from Express app
+- Initializes Socket.IO with CORS + credentials
+- Applies `socketAuthMiddleware` (JWT validation)
+- Registers all handlers via `initializeChatSocket`
 
-| Event                | Direction       | Purpose                                    |
-| -------------------- | --------------- | ------------------------------------------ |
-| `join_Room`          | Client → Server | Join a chat room                           |
-| `send_message`       | Client → Server | Send a message to the room                 |
-| `set_language`       | Client → Server | Change preferred display language           |
-| `create_room`        | Client → Server | Create a new room                          |
-| `update_room_mode`   | Client → Server | Toggle Global/Native mode (admin only)     |
-| `add_reaction`       | Client → Server | React to a message with an emoji           |
-| `typing_start`       | Client → Server | Notify typing started                      |
-| `typing_stop`        | Client → Server | Notify typing stopped                      |
-| `receive_message`    | Server → Client | New message received (original text)       |
-| `translations_ready` | Server → Client | Translations available for a message       |
-| `room_history`       | Server → Client | Last 50 messages on room join              |
-| `room_users`         | Server → Client | Updated list of online users               |
-| `room_info`          | Server → Client | Room mode and admin status                 |
-| `reaction_update`    | Server → Client | Updated reactions for a message            |
-| `user_typing`        | Server → Client | Typing indicator from another user         |
-| `error_event`        | Server → Client | Error notification                         |
+`Backend_TS/src/sockets/chat.socket.ts` behavior:
 
----
+- Loads user identity (`username`, `profilePicture`) on connect
+- Maintains per-socket rate limit buckets in memory
+- Periodic cleanup sweep of rate-limit map every 5 minutes
+- Sanitizes incoming message text before persistence
+- Handles room join/leave, room creation, mode updates, messaging, reactions, typing
 
-## 🔐 Security Measures
+## 4. Frontend Architecture
 
-- **JWT Authentication** on all REST routes and socket connections
-- **Per-route rate limiting** (Express `express-rate-limit`)
-- **Per-socket rate limiting** (custom in-memory rate limiter in `chat.socket.ts`)
-- **Zod schema validation** on registration/login input
-- **bcrypt password hashing** (cost factor 10)
-- **Refresh tokens hashed before storage** (bcrypt)
-- **Session TTL auto-delete** via MongoDB TTL index
+### 4.1 App Shell
 
----
+`Frontend_TS/src/App.tsx` wraps providers in this order:
 
-## 🐛 Bug Report
+1. `ThemeProvider`
+2. `AuthProvider`
+3. `ChatProvider`
+4. Router (`/login`, `/register`, `/`, `/room/:roomId`)
 
-### 🔴 Major Bugs (Functionality-Breaking / Security)
+Protected routes use `ProtectedRoute`.
 
-#### 1. Upload Feature Is Entirely Dead Code
-- **Files affected:** `upload.routes.ts`, `upload.controller.ts`, `multer.config.ts`, `app.ts`
-- **Issue:** Upload routes are defined in `upload.routes.ts` but **never registered** in `app.ts` (no `app.use('/api/upload', uploadRoutes)`). Additionally, there is no `express.static` middleware serving the `/uploads` directory, so even if uploads were registered, uploaded files could never be served back to clients.
-- **Impact:** The entire file upload pipeline is dead code.
+### 4.2 Auth State
 
-#### 2. No Room Leave — Cross-Room Message Pollution
-- **Files affected:** `chat.socket.ts`, `RoomPage.tsx`
-- **Issue:** When a user navigates from Room A to Room B, the socket calls `socket.join(roomB)` but **never leaves Room A**. Since `receive_message` payloads do not include a `room` field for filtering, the `onReceiveMessage` handler in Room B will add Room A's incoming messages to Room B's message list. The `leave_room` event is commented out in `socket.ts` types, confirming this was a known gap.
-- **Impact:** Users see messages from other rooms they previously visited. This is a significant data integrity and UX bug.
+`AuthContext` responsibilities:
 
-#### 3. `isSoundEnabled` Stale Closure in RoomPage
-- **File affected:** `RoomPage.tsx`
-- **Issue:** The `onReceiveMessage` handler inside the main `useEffect` captures `isSoundEnabled` in a closure, but `isSoundEnabled` is **not** listed in the `useEffect` dependency array (`[myLang, roomId, scrollToBottom, socket, user, isConnected]`). Once the effect is set up, toggling the sound setting has no effect — the handler always uses the initial value.
-- **Impact:** Sound toggle is broken after initial mount until the user changes language or reconnects.
+- Stores `user`, `accessToken`, and `refreshToken` in localStorage
+- Exposes `login`, `logout`, `isAuthenticated`
+- Refreshes access token every 23 hours via `/auth/refresh-token`
 
-#### 4. Room `members` Array Never Updated on Join
-- **Files affected:** `chat.socket.ts`, `rom.service.ts`, `room.model.ts`
-- **Issue:** When users join a room via the `join_Room` socket event, the `Room.members` array in MongoDB is **never updated** — it only contains the creator (set at room creation time). The dashboard's "X members" count shown on room cards is always wrong (shows 1).
-- **Impact:** Persistent member tracking is broken. The online user list (via socket adapter) works for real-time presence, but the DB member count is inaccurate.
+### 4.3 Socket State
 
-#### 5. Refresh Token Validation Is O(n) bcrypt — DoS Vector
-- **File affected:** `auth.services.ts`
-- **Issue:** `refreshAccessToken` iterates **all** sessions for a user and runs `bcrypt.compare()` on each until it finds a match. Each bcrypt comparison takes ~100ms. A user with 10 sessions would require ~1 second of CPU time per refresh request.
-- **Impact:** An attacker could create many sessions and spam refresh requests to exhaust server CPU. This is a denial-of-service vector.
+`chatContext`:
 
-#### 6. `user_joined` Event Emitted to Self
-- **File affected:** `chat.socket.ts`
-- **Issue:** `io.to(data.room).emit("user_joined", ...)` includes the joining socket itself. The user sees their own "X joined the room" system message.
-- **Fix:** Should use `socket.to(data.room).emit(...)` to broadcast to everyone **except** the sender.
+- Opens socket only when user + access token are present
+- Authenticates with `auth: { token }`
+- Tracks `isConnected` and `connectionError`
+- Disconnects socket on cleanup/auth change
 
----
+### 4.4 Feature Pages
 
-### 🟡 Minor Bugs (Code Quality / DRY Violations / Non-Critical)
+- `RegisterPage`: multipart registration with optional profile image
+- `LoginPage`: username/password login
+- `HomePage`: fetch/search/list rooms, create room, join by room id/name, manage room mode/delete for authorized users
+- `RoomPage`: room chat UI (history, streaming translations, reactions, replies, typing indicators, language switching, sound toggle, participant list)
 
-#### 7. `rom.service.ts` Filename Typo
-- **File:** `Backend_TS/src/services/rom.service.ts`
-- **Issue:** Should be `room.service.ts`. Every import references it as `rom.service.ts` which is confusing.
+## 5. API Surface (Implemented)
 
-#### 8. `(req as any).user?.id` Instead of Typed Request
-- **Files affected:** `auth.controller.ts`, `roomControllers.ts`
-- **Issue:** The `AuthenticationRequest` interface is defined in `auth.middleware.ts` with a properly typed `user` field, but controllers cast `req as any` instead of using `req as AuthenticationRequest`. This defeats TypeScript's type safety.
+### 5.1 REST Endpoints
 
-#### 9. Duplicate Email Gives Raw MongoDB Error
-- **File affected:** `auth.services.ts`
-- **Issue:** Registration checks username uniqueness at the service level but not email. A duplicate email triggers a raw MongoDB unique index error instead of a user-friendly message like "Email already in use".
+Auth:
 
-#### 10. CORS Origins Duplicated in Two Files
-- **Files affected:** `server.ts`, `app.ts`
-- **Issue:** The identical CORS origin array (`defaultOrigins`, `envOrigins`, `corsOrigins`) is defined independently in both files. This is a DRY violation — changes in one file may not be reflected in the other.
-- **Fix:** Extract to a shared config module.
+- `POST /api/auth/register` (multipart; optional `profilePicture`)
+- `POST /api/auth/login`
+- `POST /api/auth/refresh-token`
+- `POST /api/auth/logout-session` (auth required)
+- `POST /api/auth/logout-all` (auth required)
+- `GET /api/auth/sessions` (auth required)
+- `GET /api/auth/profile` (auth required)
 
-#### 11. Misleading Error Message in `db.ts`
-- **File affected:** `config/db.ts`
-- **Issue:** Error message says `"MONGO_URI is not defined"` but the actual environment variable checked is `MONGODB_URI`.
+Rooms:
 
-#### 12. `config/env.ts` Is Dead Code
-- **File affected:** `config/env.ts`
-- **Issue:** This file calls `dotenv.config()` and logs a message, but it is **never imported** anywhere. `server.ts` calls `dotenv.config()` directly at the top.
+- `GET /api/rooms` (auth required)
+- `GET /api/rooms/search?q=...` (auth required)
+- `GET /api/rooms/:id` (auth required; accepts room ObjectId or room name)
+- `PATCH /api/rooms/:id/mode` (auth required; owner/admin)
+- `DELETE /api/rooms/:id` (auth required; owner only)
 
-#### 13. Profile Endpoint Missing Username
-- **File affected:** `auth.routes.ts`
-- **Issue:** `GET /api/auth/profile` returns `{ id, role }` but not `username`. The JWT payload contains `username`, but it's not included in the response.
+Uploads:
 
-#### 14. Translation Cache Has No TTL
-- **File affected:** `translation.service.ts`
-- **Issue:** The in-memory translation cache has a max size of 1000 entries but no time-to-live. Stale translations persist until evicted by newer entries. Low risk given the size cap but could serve outdated translations.
+- `POST /api/upload` (auth required; `image` field; returns `/uploads/<filename>`)
 
-#### 15. Test Dependencies in Production `dependencies`
-- **File affected:** `Backend_TS/package.json`
-- **Issue:** `jest`, `supertest`, and `socket.io-client` are listed under `dependencies` instead of `devDependencies`. This unnecessarily bloats the production install.
+Infra:
 
-#### 16. No Server-Side XSS Sanitization on Messages
-- **File affected:** `chat.socket.ts`
-- **Issue:** Message content is stored as-is in MongoDB without any sanitization. While React auto-escapes text in the UI (mitigating direct XSS), the raw content in the DB could be exploited if consumed by other clients, admin tools, or APIs.
+- `GET /api/health`
 
-#### 17. `createSession` Redundant Database Query
-- **File affected:** `auth.services.ts`
-- **Issue:** `createSession(userId, ...)` calls `User.findById(userId)` even though the callers (`registerUser`/`loginUser`) already have the full user object available. This results in an unnecessary extra DB query on every login/registration.
+### 5.2 Socket Events
 
-#### 18. No Password Confirmation on Registration
-- **Files affected:** `RegisterPage.tsx`, `auth.controller.ts`
-- **Issue:** Registration has no "confirm password" field, making it easy for users to set an unintended password due to typos.
+Client -> Server:
 
-#### 19. Potential Duplicate Messages on Reconnect
-- **File affected:** `RoomPage.tsx`
-- **Issue:** If the socket disconnects and reconnects within the same `RoomPage` mount, `room_history` resets the messages list via `setMessages(history)`. However, any messages received between the old connection's teardown and the new `room_history` emission could briefly appear duplicated. Low probability but possible.
+- `join_Room`
+- `leave_room`
+- `set_language`
+- `create_room`
+- `update_room_mode`
+- `send_message`
+- `add_reaction`
+- `typing_start`
+- `typing_stop`
 
-#### 20. `perSocketRate` Map Potential Unbounded Growth
-- **File affected:** `chat.socket.ts`
-- **Issue:** The `perSocketRate` map is cleaned up on socket `disconnect`, but if disconnect events fail to fire (network issues), entries accumulate in memory. Low risk given Socket.IO's heartbeat mechanism, but there's no periodic cleanup sweep.
+Server -> Client:
 
----
+- `room_history`
+- `receive_message`
+- `translations_ready` (chunked async translations)
+- `message_status` (`sent`/`failed`)
+- `reaction_update`
+- `room_users`
+- `room_info`
+- `room_created`
+- `user_typing`
+- `user_joined`
+- `error_event`
 
-## 📊 Bug Severity Summary
+## 6. Core Runtime Flows
 
-| Severity | Count | Key Issues |
-|----------|-------|------------|
-| 🔴 Major | 6 | Dead upload feature, cross-room message leak, stale sound closure, broken member tracking, refresh DoS vector, self-join notification |
-| 🟡 Minor | 14 | Filename typo, type safety bypasses, DRY violations, dead code, missing sanitization, redundant queries |
+### 6.1 Registration/Login
 
----
+1. Frontend submits credentials (`register` supports optional image).
+2. Backend validates payload (Zod), hashes password, creates user.
+3. Backend issues access + refresh tokens and creates session record.
+4. Frontend stores tokens/user and initializes socket connection.
 
-## 🗺️ Suggested Improvements
+### 6.2 Join Room
 
-1. **Implement `leave_room`** — Leave the previous room before joining a new one to prevent cross-room message pollution.
-2. **Register upload routes** — Add `app.use('/api/upload', uploadRoutes)` and `express.static` middleware, or remove the dead upload code.
-3. **Fix `isSoundEnabled` dependency** — Add it to the `useEffect` dependency array or use a `useRef` to track the current value.
-4. **Update room members on join** — Push the user's ID into `Room.members` when they join via socket.
-5. **Optimize refresh token lookup** — Store a token identifier (jti) alongside the hashed token, or index sessions differently to avoid O(n) bcrypt comparisons.
-6. **Extract shared CORS config** — Create a `config/cors.ts` module imported by both `server.ts` and `app.ts`.
-7. **Add server-side message sanitization** — Use a library like `DOMPurify` or `sanitize-html` before storing messages.
-8. **Rename `rom.service.ts`** → `room.service.ts`.
-9. **Move test deps to `devDependencies`**.
-10. **Use `AuthenticationRequest` type** in controllers instead of `(req as any)`.
+1. Client emits `join_Room({ room, lang })`.
+2. Server leaves previous room if needed, then joins target room.
+3. Server upserts persistent room membership (`$addToSet`).
+4. Server emits room metadata (`room_info`) and room history (`room_history`).
+5. Server emits current live occupants as `room_users`.
+
+### 6.3 Message Delivery (Global Mode)
+
+1. Client emits `send_message`.
+2. Server sanitizes text and persists message immediately with empty translations.
+3. Server broadcasts `receive_message` immediately.
+4. Server runs translation in background (Lingo SDK) and emits `translations_ready` chunks per language.
+5. Server updates stored message translations in MongoDB.
+
+Native mode skips background translation.
+
+## 7. Data Model Summary
+
+- `User`: identity, credentials, role, profilePicture
+- `UserSession`: refresh-token session metadata + TTL expiry
+- `Room`: room metadata, owner/admins/members, visibility, translation mode
+- `Message`: immutable message id, original text, translation map, reaction map, optional reply linkage
+
+Indexes present:
+
+- `User.username` unique
+- `User.email` unique
+- `Room.name` unique
+- `Message.msgId` unique
+- `Message` compound index (`room`, `createdAt`)
+- `UserSession.expiresAt` TTL
+- `UserSession.tokenId` indexed
+
+## 8. Deployment and Operations
+
+- `docker-compose.yml` runs:
+  - backend (`:5000`) with health check on `/api/health`
+  - frontend (`:80`) with backend dependency
+- `docker-compose.dev.yml` runs hot-reload Node containers for backend and frontend
+- CORS origins are centrally derived in `Backend_TS/src/config/cors.ts`
+
+Environment variables are defined in `Backend_TS/.env.example`:
+
+- DB: `MONGODB_URI`
+- Auth: `JWT_SECRET`, `JWT_REFRESH_SECRET`
+- Translation: `LINGO_API_KEY`, optional `LINGO_API_URL`
+- Media: `CLOUDINARY_*`
+- CORS: `CORS_ORIGINS`
+
+## 9. Testing Status
+
+Backend includes Jest suites for:
+
+- Auth route coverage (`tests/auth.test.ts`)
+- Socket chat flows (`tests/chat.test.ts`)
+
+No frontend automated tests are currently present in this repository.
+
+## 10. Current Technical Notes
+
+- There are two upload paths:
+  - Cloudinary upload during registration (`profilePicture`)
+  - Local disk upload endpoint (`/api/upload`)
+- Translation cache is in-memory and process-local (not shared across backend replicas).
+- Socket rate limits are in-memory and per-node (not globally distributed).

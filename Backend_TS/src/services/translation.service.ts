@@ -1,31 +1,29 @@
-import { LingoDotDevEngine } from "lingo.dev/sdk";
+/**
+ * Translation service using a custom Lingo.dev client (native https).
+ *
+ * The Lingo.dev SDK uses `fetch()` internally, which is broken in Node.js v24
+ * when connecting to Cloudflare-proxied APIs (TypeError: terminated).
+ * We use our own client that calls the same /i18n API via Node's `https` module.
+ */
+import * as lingoClient from './lingoClient.ts';
 
-// ── Lazy-initialized SDK ──
-// With ESM, all imports are resolved before any module code runs, so
-// `process.env.LINGO_API_KEY` is undefined at import-time.
-// We create the engine on first use, by which time dotenv.config() will
-// have executed in server.ts.
-let _lingo: LingoDotDevEngine | null = null;
-let _lingoInitAttempted = false;
+// ── Lazy init ──
+let _initialized = false;
 
-const getLingo = (): LingoDotDevEngine | null => {
-  if (!_lingoInitAttempted) {
-    _lingoInitAttempted = true;
+const initClient = () => {
+  if (_initialized) return;
+  _initialized = true;
 
-    const apiKey = process.env.LINGO_API_KEY;
-    if (apiKey) {
-      _lingo = new LingoDotDevEngine({
-        apiKey,
-        apiUrl: process.env.LINGO_API_URL ?? 'https://engine.lingo.dev',
-      });
-      console.log('[translation] ✅ Lingo SDK initialized successfully');
-    } else {
-      console.error('[translation] ❌ LINGO_API_KEY not found in environment — translations disabled');
-    }
+  const apiKey = process.env.LINGO_API_KEY;
+  if (apiKey) {
+    lingoClient.initLingoClient(apiKey);
+    console.log('[translation] ✅ Translation service initialized');
+  } else {
+    console.error('[translation] ❌ LINGO_API_KEY not found — translations disabled');
   }
-  return _lingo;
 };
 
+// ── Locale mapping ──
 const localeMap: Record<string, string> = {
   en: 'en',
   hi: 'hi-IN',
@@ -50,44 +48,44 @@ const translationCache = new Map<string, CacheEntry>();
 const MAX_CACHE_SIZE = 1000;
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
-const getCachedOrTranslate = async (
-  text: string,
-  sourceLocale: string | null,
-  targetLocale: string,
-): Promise<string> => {
-  const lingo = getLingo();
-  if (!lingo) return text;
+const cacheTranslation = (text: string, sourceLocale: string | null, targetLocale: string, translated: string) => {
+  const cacheKey = `${text}:${sourceLocale ?? 'auto'}:${targetLocale}`;
+  translationCache.set(cacheKey, { value: translated, expiresAt: Date.now() + CACHE_TTL_MS });
+  if (translationCache.size > MAX_CACHE_SIZE) {
+    const firstKey = translationCache.keys().next().value;
+    if (firstKey) translationCache.delete(firstKey);
+  }
+};
 
+const getCached = (text: string, sourceLocale: string | null, targetLocale: string): string | null => {
   const cacheKey = `${text}:${sourceLocale ?? 'auto'}:${targetLocale}`;
   const cached = translationCache.get(cacheKey);
   if (cached) {
     if (Date.now() < cached.expiresAt) return cached.value;
     translationCache.delete(cacheKey);
   }
+  return null;
+};
 
-  console.time(`[translation-api] ${targetLocale}`);
-  const translated = await lingo.localizeText(text, {
-    sourceLocale,
-    targetLocale,
-    fast: true,
-  });
-  console.timeEnd(`[translation-api] ${targetLocale}`);
+// ── Retry configuration ──
+const MAX_RETRIES = 3;
+const BASE_DELAY_MS = 1500;
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  const result = translated || text;
-
-  // Evict oldest entry if cache is full
-  translationCache.set(cacheKey, { value: result, expiresAt: Date.now() + CACHE_TTL_MS });
-  if (translationCache.size > MAX_CACHE_SIZE) {
-    const firstKey = translationCache.keys().next().value;
-    if (firstKey) translationCache.delete(firstKey);
-  }
-
-  return result;
+const isRetryableError = (err: unknown): boolean => {
+  const msg = (err as Error)?.message ?? '';
+  if (msg.includes('terminated') || msg.includes('timed out') || msg.includes('ECONNRESET')) return true;
+  const cause = (err as any)?.cause;
+  if (cause?.code === 'UND_ERR_SOCKET' || cause?.code === 'ECONNRESET' || cause?.code === 'ETIMEDOUT') return true;
+  return false;
 };
 
 /**
  * Translate `text` from `sourceLang` into every language in `targetLangs`.
  * Returns a Map<langCode, translatedText>.
+ *
+ * Translations run sequentially to avoid overwhelming the API.
+ * Each call uses Node's native https module.
  */
 export const translateText = async (
   text: string,
@@ -95,38 +93,54 @@ export const translateText = async (
   targetLangs: string[],
   onChunk?: (lang: string, translated: string) => void
 ): Promise<Map<string, string>> => {
+  initClient();
   const translations = new Map<string, string>();
-  const lingo = getLingo();
 
-  if (!lingo) {
-    console.warn('[translation] Lingo SDK not initialized — returning empty translations');
-    return translations;
-  }
-
-  // sourceLocale: null tells Lingo to auto-detect the language
   const sourceLocale = toLocale(sourceLang, null);
   console.log(`[translation] sourceLocale resolved: "${sourceLang}" → ${sourceLocale ?? 'null (auto-detect)'}`);
 
-  const promises = targetLangs.map(async (lang) => {
+  for (const lang of targetLangs) {
     const targetLocale = toLocale(lang, null) ?? lang;
-    if (targetLocale === sourceLocale) {
-      return;
+    if (targetLocale === sourceLocale) continue;
+
+    // Check cache
+    const cached = getCached(text, sourceLocale, targetLocale);
+    if (cached) {
+      translations.set(lang, cached);
+      if (onChunk) onChunk(lang, cached);
+      console.log(`[translation] ✅ ${lang} — cache hit`);
+      continue;
     }
 
-    try {
-      const translated = await getCachedOrTranslate(text, sourceLocale, targetLocale);
-      if (translated) {
+    // Translate with retry
+    let lastError: unknown;
+    let success = false;
+    for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const callId = Math.random().toString(36).slice(2, 7);
+        console.time(`[translation] ${lang}#${callId}`);
+        const translated = await lingoClient.localizeText(text, sourceLocale, targetLocale, true);
+        console.timeEnd(`[translation] ${lang}#${callId}`);
+
         translations.set(lang, translated);
-        if (onChunk) {
-          onChunk(lang, translated);
+        cacheTranslation(text, sourceLocale, targetLocale, translated);
+        if (onChunk) onChunk(lang, translated);
+        success = true;
+        break;
+      } catch (err) {
+        lastError = err;
+        if (attempt < MAX_RETRIES && isRetryableError(err)) {
+          const delay = BASE_DELAY_MS * Math.pow(2, attempt);
+          console.warn(`[translation] ⚠️  ${lang} attempt ${attempt + 1} failed (retrying in ${delay}ms):`, (err as Error).message);
+          await sleep(delay);
         }
       }
-    } catch (error) {
-      console.error(`[translation] Error translating to ${lang} (${targetLocale}):`, error);
     }
-  });
+    if (!success) {
+      console.error(`[translation] ❌ Failed ${lang} after ${MAX_RETRIES} retries:`, (lastError as Error).message);
+    }
+  }
 
-  await Promise.all(promises);
   return translations;
 };
 
@@ -139,20 +153,32 @@ export const translateSingle = async (
   sourceLang: string,
   targetLang: string,
 ): Promise<string> => {
-  const lingo = getLingo();
-  if (!lingo) return text;
+  initClient();
 
   const sourceLocale = toLocale(sourceLang, null);
   const targetLocale = toLocale(targetLang, null) ?? targetLang;
 
-  if (!targetLocale || targetLocale === sourceLocale) {
-    return text;
+  if (!targetLocale || targetLocale === sourceLocale) return text;
+
+  const cached = getCached(text, sourceLocale, targetLocale);
+  if (cached) return cached;
+
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const translated = await lingoClient.localizeText(text, sourceLocale, targetLocale, true);
+      cacheTranslation(text, sourceLocale, targetLocale, translated);
+      return translated;
+    } catch (err) {
+      lastError = err;
+      if (attempt < MAX_RETRIES && isRetryableError(err)) {
+        const delay = BASE_DELAY_MS * Math.pow(2, attempt);
+        console.warn(`[translation] ⚠️  ${targetLocale} attempt ${attempt + 1} failed (retrying):`, (err as Error).message);
+        await sleep(delay);
+      }
+    }
   }
 
-  try {
-    return await getCachedOrTranslate(text, sourceLocale, targetLocale);
-  } catch (error) {
-    console.error(`[translation] Single translate error:`, error);
-    return text;
-  }
+  console.error(`[translation] Single translate failed:`, (lastError as Error).message);
+  return text;
 };

@@ -132,7 +132,9 @@ export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerT
         const messages = await chatService.getRoomHistory(data.room);
         const userLang = socket.data.lang || 'en';
 
-        const translationPromises = messages.map(async (m: any) => {
+        // Process messages sequentially to avoid overwhelming the Lingo.dev API
+        const payload = [];
+        for (const m of messages as any[]) {
           const translations = m.translations instanceof Map
             ? Object.fromEntries(m.translations)
             : (m.translations ?? {});
@@ -152,7 +154,7 @@ export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerT
                 translations[userLang] = translated;
               }
             } catch (err) {
-              console.error(`[history] On-the-fly translate error for ${m.msgId}:`, err);
+              console.error(`[history] On-the-fly translate error for ${m.msgId}:`, (err as Error).message);
               socket.emit('error_event', { message: 'Translation unavailable. Showing original message.' });
             }
           }
@@ -160,7 +162,7 @@ export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerT
           // Fetch author's profile picture if possible (optimization: could bulk fetch authors)
           const authorUser = await User.findOne({ username: m.author }).select("profilePicture");
 
-          return {
+          payload.push({
             author: m.author,
             ...(authorUser?.profilePicture ? { authorProfilePicture: authorUser.profilePicture } : {}),
             message: translations[userLang] ?? m.original,
@@ -171,10 +173,9 @@ export const initializeChatSocket = (io: Server<ClientToServerInterface, ServerT
             translations,
             reactions,
             ...(m.replyTo ? { replyTo: m.replyTo } : {}),
-          };
-        });
+          });
+        }
 
-        const payload = await Promise.all(translationPromises);
         socket.emit("room_history", payload);
       } catch (error) {
         console.error("Error fetching room history:", error);

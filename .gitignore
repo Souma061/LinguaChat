@@ -37,6 +37,7 @@ Thumbs.db
 .cache/
 .next/
 .svelte-kit/
+.expo/
 
 # Misc
 *.tgz

@@ -92,67 +92,38 @@ Built with a modern TypeScript stack: **React 19 + Vite** on the frontend and **
 ```
 LinguaChat/
 │
-├── Backend_TS/                    # Node.js + Express + Socket.IO server
-│   ├── src/
-│   │   ├── server.ts              # Entry point — HTTP server + Socket.IO setup
-│   │   ├── app.ts                 # Express app — CORS, rate limiting, routes
-│   │   ├── config/
-│   │   │   └── db.ts              # MongoDB connection
-│   │   ├── controllers/
-│   │   │   ├── auth.controller.ts # Register, login, token refresh, sessions
-│   │   │   └── roomControllers.ts # Room CRUD operations
-│   │   ├── middlewares/
-│   │   │   ├── auth.middleware.ts  # JWT authentication for REST routes
-│   │   │   └── socketAuth.middleware.ts  # JWT authentication for sockets
-│   │   ├── models/
-│   │   │   ├── user.model.ts      # User schema (username, email, password, role)
-│   │   │   ├── message.model.ts   # Message schema (translations, reactions, replies)
-│   │   │   ├── room.model.ts      # Room schema (owner, admins, mode)
-│   │   │   └── userSession.model.ts  # Session tracking
-│   │   ├── routes/
-│   │   │   ├── auth.routes.ts     # /api/auth/* endpoints
-│   │   │   └── room.routes.ts     # /api/rooms/* endpoints
-│   │   ├── services/
-│   │   │   ├── auth.services.ts   # Auth business logic
-│   │   │   ├── chat.service.ts    # Message save, translate, history
-│   │   │   ├── rom.service.ts     # Room business logic
-│   │   │   └── translation.service.ts  # Lingo.dev SDK integration + cache
-│   │   ├── sockets/
-│   │   │   └── chat.socket.ts     # All real-time event handlers
-│   │   └── types/
-│   │       └── socket.d.ts        # Socket.IO type definitions
-│   ├── tests/                     # Jest test suites
-│   ├── package.json
-│   └── tsconfig.json
-│
-├── Frontend_TS/                   # React 19 + Vite SPA
-│   ├── src/
-│   │   ├── main.tsx               # App entry point
-│   │   ├── App.tsx                # Router setup (login, register, home, room)
-│   │   ├── context/
-│   │   │   ├── AuthContext.tsx     # Auth state + token management
-│   │   │   └── chatContext.tsx     # Socket.IO connection management
-│   │   ├── components/
-│   │   │   ├── MessageBubble.tsx   # Chat message with reactions & replies
-│   │   │   ├── EmojiPicker.tsx     # Emoji selection component
-│   │   │   └── ProtectedRoute.tsx  # Auth guard for protected pages
-│   │   ├── pages/
-│   │   │   ├── Auth/
-│   │   │   │   ├── LoginPage.tsx
-│   │   │   │   └── RegisterPage.tsx
-│   │   │   ├── Dashboard/
-│   │   │   │   └── HomePage.tsx    # Room list, create/join rooms
-│   │   │   └── Chat/
-│   │   │       └── RoomPage.tsx    # Full chat interface
-│   │   ├── services/
-│   │   │   └── api.ts             # Axios instance with auth interceptor
-│   │   └── types/
-│   │       └── socket.ts          # Shared socket event types
-│   ├── vercel.json                # SPA rewrite rules for Vercel
-│   ├── package.json
-│   └── vite.config.ts
-│
-└── README.md
+├── apps/
+│   ├── api/                       # Node.js + Express + Socket.IO backend
+│   │   ├── src/
+│   │   │   ├── server.ts          # Entry point — HTTP server + Socket.IO setup
+│   │   │   ├── app.ts             # Express app — CORS, rate limiting, routes
+│   │   │   ├── config/
+│   │   │   ├── controllers/
+│   │   │   ├── middlewares/
+│   │   │   ├── models/
+│   │   │   ├── routes/
+│   │   │   ├── services/
+│   │   │   ├── sockets/
+│   │   │   └── types/
+│   │   ├── tests/                 # Jest test suites
+│   │   ├── package.json
+│   │   └── tsconfig.json
+│   ├── web/                       # React 19 + Vite SPA
+│   │   ├── src/
+│   │   │   ├── main.tsx           # App entry point
+│   │   │   ├── App.tsx            # Router setup (login, register, home, room)
+│   │   │   ├── context/
+│   │   │   ├── components/
+│   │   │   ├── pages/
+│   │   │   ├── services/
+│   │   │   └── types/
+│   │   ├── vercel.json            # SPA rewrite rules for Vercel
+│   │   ├── package.json
+│   │   └── vite.config.ts
+│   └── mobile/                    # Expo + React Native client
+├── packages/
+│   └── shared/                    # Shared chat + socket contracts
+└── package.json                   # Root workspace scripts
 ```
 
 ---
@@ -181,10 +152,10 @@ cd LinguaChat
 #### 2. Create the backend `.env` file
 
 ```bash
-cp Backend_TS/.env.example Backend_TS/.env
+cp apps/api/.env.example apps/api/.env
 ```
 
-Edit `Backend_TS/.env` and fill in your credentials:
+Edit `apps/api/.env` and fill in your credentials:
 
 ```env
 LINGO_API_KEY=your_lingo_api_key
@@ -244,8 +215,7 @@ cd LinguaChat
 #### 2. Backend Setup
 
 ```bash
-cd Backend_TS
-npm install
+npm --prefix apps/api install
 ```
 
 Create a `.env` file:
@@ -265,7 +235,7 @@ CORS_ORIGINS=http://localhost:5173,http://localhost:5174
 Start the development server:
 
 ```bash
-npm run dev
+npm run dev:api
 ```
 
 > Backend runs on `http://localhost:5000`
@@ -273,8 +243,7 @@ npm run dev
 #### 3. Frontend Setup
 
 ```bash
-cd Frontend_TS
-npm install
+npm --prefix apps/web install
 ```
 
 Create a `.env` file:
@@ -287,18 +256,32 @@ VITE_SOCKET_URL=http://localhost:5000
 Start the development server:
 
 ```bash
-npm run dev
+npm run dev:web
 ```
 
 > Frontend runs on `http://localhost:5173`
+
+#### 4. Mobile Setup
+
+```bash
+cp apps/mobile/.env.example apps/mobile/.env
+npm --prefix apps/mobile install
+```
+
+Start the Expo development server:
+
+```bash
+npm run dev:mobile
+```
+
+> Mobile runs through Expo and talks to the same backend in `apps/api`
 
 ---
 
 ## 🧪 Testing
 
 ```bash
-cd Backend_TS
-npm test
+npm run test:api
 ```
 
 Tests use **Jest** with **MongoDB Memory Server** for isolated database testing and **Supertest** for HTTP endpoint validation.
@@ -374,7 +357,7 @@ This ensures messages appear instantly while translations arrive within seconds.
 1. Create a **Web Service** on [Render](https://render.com)
 2. Connect your GitHub repository
 3. Configure:
-   - **Root Directory**: `Backend_TS`
+   - **Root Directory**: `apps/api`
    - **Build Command**: `npm install && npm run build`
    - **Start Command**: `npm start`
 4. Add environment variables (`MONGODB_URI`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `LINGO_API_KEY`, `CORS_ORIGINS`)
@@ -382,7 +365,7 @@ This ensures messages appear instantly while translations arrive within seconds.
 ### Frontend → Vercel
 
 1. Import the repository on [Vercel](https://vercel.com)
-2. Set **Root Directory** to `Frontend_TS`
+2. Set **Root Directory** to `apps/web`
 3. Add environment variables:
    - `VITE_BACKEND_URL` = `https://your-backend.onrender.com/api`
    - `VITE_SOCKET_URL` = `https://your-backend.onrender.com`

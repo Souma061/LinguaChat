@@ -1,0 +1,19 @@
+{
+  "name": "linguachat",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm --prefix apps/api run dev",
+    "dev:mobile": "npm --prefix apps/mobile run start",
+    "dev:web": "npm --prefix apps/web run dev",
+    "android:mobile": "npm --prefix apps/mobile run android",
+    "ios:mobile": "npm --prefix apps/mobile run ios",
+    "build:api": "npm --prefix apps/api run build",
+    "build:web": "npm --prefix apps/web run build",
+    "test:api": "npm --prefix apps/api test",
+    "lint:web": "npm --prefix apps/web run lint"
+  }
+}

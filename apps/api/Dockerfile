@@ -1,13 +1,15 @@
 # ---------- BUILD STAGE ----------
 FROM node:20-alpine AS builder
 
-WORKDIR /app
+WORKDIR /workspace
 
-COPY package*.json ./
-RUN npm ci --legacy-peer-deps
+COPY apps/api/package*.json ./apps/api/
+RUN npm --prefix apps/api ci --legacy-peer-deps
 
-COPY tsconfig.json ./
-COPY src ./src
+COPY apps/api ./apps/api
+COPY packages/shared ./packages/shared
+
+WORKDIR /workspace/apps/api
 RUN npm run build
 
 
@@ -20,7 +22,7 @@ RUN apk add --no-cache wget dumb-init \
 WORKDIR /app
 RUN mkdir -p uploads && chown appuser:appgroup /app /app/uploads
 
-COPY --chown=appuser:appgroup package*.json ./
+COPY --chown=appuser:appgroup apps/api/package*.json ./
 RUN npm ci --omit=dev --legacy-peer-deps \
   && rm -rf node_modules/@next node_modules/next \
   node_modules/@octokit node_modules/date-fns \
@@ -31,7 +33,7 @@ RUN npm ci --omit=dev --legacy-peer-deps \
   node_modules/es-toolkit \
   && npm cache clean --force
 
-COPY --chown=appuser:appgroup --from=builder /app/dist ./dist
+COPY --chown=appuser:appgroup --from=builder /workspace/apps/api/dist ./dist
 
 USER appuser
 

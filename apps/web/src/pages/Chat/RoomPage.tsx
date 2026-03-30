@@ -7,10 +7,16 @@ import MessageBubble from "../../components/MessageBubble";
 import ThemeToggle from "../../components/ThemeToggle";
 import { useAuth } from "../../context/AuthContext";
 import { useChat } from "../../context/chatContext";
+import type {
+  LanguageCode,
+  ReplyReference,
+  RoomInfoPayload,
+  RoomMode,
+  RoomUserPresence,
+  TranslationsReadyPayload,
+} from "../../types/socket";
 
-type LangCode = "en" | "hi" | "bn" | "es" | "fr" | "de" | "ja";
-
-const LANG_OPTIONS: { code: LangCode; label: string }[] = [
+const LANG_OPTIONS: { code: LanguageCode; label: string }[] = [
   { code: "en", label: "English" },
   { code: "hi", label: "Hindi" },
   { code: "bn", label: "Bengali" },
@@ -19,14 +25,6 @@ const LANG_OPTIONS: { code: LangCode; label: string }[] = [
   { code: "de", label: "German" },
   { code: "ja", label: "Japanese" },
 ];
-
-interface RoomUser {
-  id: string;
-  username: string;
-  profilePicture?: string;
-  lang: string;
-  status: "online";
-}
 
 const RoomPage = () => {
   const { roomId: rawRoomId } = useParams<{ roomId: string }>();
@@ -37,19 +35,19 @@ const RoomPage = () => {
 
   const [messages, setMessages] = useState<MessageData[]>([]);
   const [input, setInput] = useState("");
-  const [roomUsers, setRoomUsers] = useState<RoomUser[]>([]);
+  const [roomUsers, setRoomUsers] = useState<RoomUserPresence[]>([]);
   const [isNativeMode, setIsNativeMode] = useState(false);
-  const [roomMode, setRoomMode] = useState<"Global" | "Native">("Global");
+  const [roomMode, setRoomMode] = useState<RoomMode>("Global");
   const [lastError, setLastError] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [myLang, setMyLang] = useState<LangCode>(() => {
+  const [myLang, setMyLang] = useState<LanguageCode>(() => {
     const stored = localStorage.getItem("linguachat.lang");
     if (stored && LANG_OPTIONS.some((o) => o.code === stored)) {
-      return stored as LangCode;
+      return stored as LanguageCode;
     }
     const nav = (navigator.language || "en").toLowerCase();
-    const base = nav.split("-")[0] as LangCode;
+    const base = nav.split("-")[0] as LanguageCode;
     return LANG_OPTIONS.some((o) => o.code === base) ? base : "en";
   });
 
@@ -67,11 +65,7 @@ const RoomPage = () => {
     });
   };
 
-  const [replyTo, setReplyTo] = useState<{
-    msgId: string;
-    author: string;
-    message: string;
-  } | null>(null);
+  const [replyTo, setReplyTo] = useState<ReplyReference | null>(null);
 
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
 
@@ -213,26 +207,19 @@ const RoomPage = () => {
       // Handle user joined event
     };
 
-    const onRoomUsers = (users: RoomUser[]) => {
+    const onRoomUsers = (users: RoomUserPresence[]) => {
       setRoomUsers(Array.isArray(users) ? users : []);
     };
 
-    const onRoomInfo = (info: { mode: "Global" | "Native" }) => {
-      const next = info as unknown as {
-        name?: string;
-        mode: "Global" | "Native";
-        isAdmin?: boolean;
-      };
+    const onRoomInfo = (info: RoomInfoPayload) => {
+      const next = info;
       setRoomMode(next.mode);
       setIsNativeMode(next.mode === "Native");
       setIsAdmin(Boolean(next.isAdmin));
     };
 
     // Async translations arrive after the initial message
-    const onTranslationsReady = (data: {
-      msgId: string;
-      translations: Record<string, string>;
-    }) => {
+    const onTranslationsReady = (data: TranslationsReadyPayload) => {
       setMessages((prev) =>
         prev.map((msg) =>
           msg.msgId === data.msgId
@@ -305,7 +292,7 @@ const RoomPage = () => {
   }, [myLang, roomId, scrollToBottom, socket, user, isConnected]);
 
   const handleChangeLanguage = useCallback(
-    (next: LangCode) => {
+    (next: LanguageCode) => {
       setMyLang(next);
       localStorage.setItem("linguachat.lang", next);
       if (!socket || !isConnected || !roomId) return;
@@ -607,7 +594,7 @@ const RoomPage = () => {
                   <select
                     value={myLang}
                     onChange={(e) =>
-                      handleChangeLanguage(e.target.value as LangCode)
+                      handleChangeLanguage(e.target.value as LanguageCode)
                     }
                     className="w-full rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-sm text-gray-700 dark:text-gray-200 px-3 py-2"
                   >

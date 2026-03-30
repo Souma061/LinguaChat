@@ -1,0 +1,12 @@
+{
+  "name": "@linguachat/shared",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "types": "./src/index.d.ts",
+  "exports": {
+    ".": "./src/index.d.ts",
+    "./chat": "./src/chat.d.ts",
+    "./socket": "./src/socket.d.ts"
+  }
+}

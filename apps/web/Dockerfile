@@ -1,7 +1,7 @@
 # ---------- BUILD STAGE ----------
 FROM node:20-alpine AS builder
 
-WORKDIR /app
+WORKDIR /workspace
 
 ARG VITE_BACKEND_URL
 ARG VITE_SOCKET_URL
@@ -9,18 +9,21 @@ ARG VITE_SOCKET_URL
 ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
 ENV VITE_SOCKET_URL=$VITE_SOCKET_URL
 
-COPY package*.json ./
-RUN npm ci --legacy-peer-deps
+COPY apps/web/package*.json ./apps/web/
+RUN npm --prefix apps/web ci --legacy-peer-deps
 
-COPY . .
+COPY apps/web ./apps/web
+COPY packages/shared ./packages/shared
+
+WORKDIR /workspace/apps/web
 RUN npm run build
 
 
 # ---------- RUNTIME STAGE ----------
 FROM nginx:alpine
 
-COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /workspace/apps/web/dist /usr/share/nginx/html
+COPY --from=builder /workspace/apps/web/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 

@@ -1,6 +1,6 @@
 # LinguaChat Architecture (Current State)
 
-This document reflects the implementation currently in this repository (`Backend_TS` + `Frontend_TS`), not an aspirational design.
+This document reflects the implementation currently in this repository (`apps/api` + `apps/web`), with an Expo-based mobile app scaffold in `apps/mobile` and shared chat/socket contracts in `packages/shared`.
 
 ## 1. System Overview
 
@@ -35,58 +35,62 @@ Lingo.dev SDK (cached with TTL in-memory)
 
 ```
 .
-├── Backend_TS/
-│   ├── src/
-│   │   ├── server.ts                    # dotenv + DB connect + HTTP + Socket.IO bootstrap
-│   │   ├── app.ts                       # Express middleware, routes, /api/health
-│   │   ├── config/
-│   │   │   ├── db.ts                    # Mongoose connection helpers
-│   │   │   ├── cors.ts                  # Shared CORS origin resolution
-│   │   │   ├── cloudinary.ts            # Cloudinary config for profile uploads
-│   │   │   └── multer.config.ts         # Disk upload config for /api/upload
-│   │   ├── controllers/
-│   │   │   ├── auth.controller.ts
-│   │   │   ├── roomControllers.ts
-│   │   │   └── upload.controller.ts
-│   │   ├── middlewares/
-│   │   │   ├── auth.middleware.ts
-│   │   │   ├── socketAuth.middleware.ts
-│   │   │   └── uploadMiddleware.ts      # Cloudinary multer middleware
-│   │   ├── models/
-│   │   │   ├── user.model.ts
-│   │   │   ├── userSession.model.ts
-│   │   │   ├── room.model.ts
-│   │   │   └── message.model.ts
-│   │   ├── routes/
-│   │   │   ├── auth.routes.ts
-│   │   │   ├── room.routes.ts
-│   │   │   └── upload.routes.ts
-│   │   ├── services/
-│   │   │   ├── auth.services.ts
-│   │   │   ├── room.service.ts
-│   │   │   ├── chat.service.ts
-│   │   │   └── translation.service.ts
-│   │   ├── sockets/chat.socket.ts
-│   │   └── types/socket.d.ts
-│   └── tests/                           # Jest + Supertest + socket integration tests
-├── Frontend_TS/
-│   ├── src/
-│   │   ├── main.tsx
-│   │   ├── App.tsx                      # Routes + providers
-│   │   ├── context/
-│   │   │   ├── AuthContext.tsx
-│   │   │   ├── chatContext.tsx
-│   │   │   └── ThemeContext.tsx
-│   │   ├── pages/
-│   │   │   ├── Auth/LoginPage.tsx
-│   │   │   ├── Auth/RegisterPage.tsx
-│   │   │   ├── Dashboard/HomePage.tsx
-│   │   │   └── Chat/RoomPage.tsx
-│   │   ├── components/                  # Message bubble, emoji picker, protected route, etc.
-│   │   ├── services/api.ts              # Axios instance + auth header interceptor
-│   │   └── types/socket.ts
-│   ├── Dockerfile
-│   └── nginx.conf
+├── apps/
+│   ├── api/
+│   │   ├── src/
+│   │   │   ├── server.ts                # dotenv + DB connect + HTTP + Socket.IO bootstrap
+│   │   │   ├── app.ts                   # Express middleware, routes, /api/health
+│   │   │   ├── config/
+│   │   │   │   ├── db.ts                # Mongoose connection helpers
+│   │   │   │   ├── cors.ts              # Shared CORS origin resolution
+│   │   │   │   ├── cloudinary.ts        # Cloudinary config for profile uploads
+│   │   │   │   └── multer.config.ts     # Disk upload config for /api/upload
+│   │   │   ├── controllers/
+│   │   │   │   ├── auth.controller.ts
+│   │   │   │   ├── roomControllers.ts
+│   │   │   │   └── upload.controller.ts
+│   │   │   ├── middlewares/
+│   │   │   │   ├── auth.middleware.ts
+│   │   │   │   ├── socketAuth.middleware.ts
+│   │   │   │   └── uploadMiddleware.ts  # Cloudinary multer middleware
+│   │   │   ├── models/
+│   │   │   │   ├── user.model.ts
+│   │   │   │   ├── userSession.model.ts
+│   │   │   │   ├── room.model.ts
+│   │   │   │   └── message.model.ts
+│   │   │   ├── routes/
+│   │   │   │   ├── auth.routes.ts
+│   │   │   │   ├── room.routes.ts
+│   │   │   │   └── upload.routes.ts
+│   │   │   ├── services/
+│   │   │   │   ├── auth.services.ts
+│   │   │   │   ├── room.service.ts
+│   │   │   │   ├── chat.service.ts
+│   │   │   │   └── translation.service.ts
+│   │   │   ├── sockets/chat.socket.ts
+│   │   │   └── types/socket.d.ts
+│   │   └── tests/                       # Jest + Supertest + socket integration tests
+│   ├── web/
+│   │   ├── src/
+│   │   │   ├── main.tsx
+│   │   │   ├── App.tsx                  # Routes + providers
+│   │   │   ├── context/
+│   │   │   │   ├── AuthContext.tsx
+│   │   │   │   ├── chatContext.tsx
+│   │   │   │   └── ThemeContext.tsx
+│   │   │   ├── pages/
+│   │   │   │   ├── Auth/LoginPage.tsx
+│   │   │   │   ├── Auth/RegisterPage.tsx
+│   │   │   │   ├── Dashboard/HomePage.tsx
+│   │   │   │   └── Chat/RoomPage.tsx
+│   │   │   ├── components/              # Message bubble, emoji picker, protected route, etc.
+│   │   │   ├── services/api.ts          # Axios instance + auth header interceptor
+│   │   │   └── types/socket.ts
+│   │   ├── Dockerfile
+│   │   └── nginx.conf
+│   └── mobile/                          # Expo-based React Native app scaffold
+├── packages/
+│   └── shared/                          # Shared chat + socket contracts
 ├── docker-compose.yml                   # production-like local run
 └── docker-compose.dev.yml               # live-reload dev run
 ```
@@ -95,7 +99,7 @@ Lingo.dev SDK (cached with TTL in-memory)
 
 ### 3.1 Express API Layer
 
-`Backend_TS/src/app.ts`:
+`apps/api/src/app.ts`:
 
 - Enables CORS using `corsOrigins` from `config/cors.ts`
 - Parses JSON request bodies
@@ -139,14 +143,14 @@ Auth flow uses:
 
 ### 3.4 Socket Layer
 
-`Backend_TS/src/server.ts`:
+`apps/api/src/server.ts`:
 
 - Creates HTTP server from Express app
 - Initializes Socket.IO with CORS + credentials
 - Applies `socketAuthMiddleware` (JWT validation)
 - Registers all handlers via `initializeChatSocket`
 
-`Backend_TS/src/sockets/chat.socket.ts` behavior:
+`apps/api/src/sockets/chat.socket.ts` behavior:
 
 - Loads user identity (`username`, `profilePicture`) on connect
 - Maintains per-socket rate limit buckets in memory
@@ -158,7 +162,7 @@ Auth flow uses:
 
 ### 4.1 App Shell
 
-`Frontend_TS/src/App.tsx` wraps providers in this order:
+`apps/web/src/App.tsx` wraps providers in this order:
 
 1. `ThemeProvider`
 2. `AuthProvider`
@@ -299,9 +303,9 @@ Indexes present:
   - backend (`:5000`) with health check on `/api/health`
   - frontend (`:80`) with backend dependency
 - `docker-compose.dev.yml` runs hot-reload Node containers for backend and frontend
-- CORS origins are centrally derived in `Backend_TS/src/config/cors.ts`
+- CORS origins are centrally derived in `apps/api/src/config/cors.ts`
 
-Environment variables are defined in `Backend_TS/.env.example`:
+Environment variables are defined in `apps/api/.env.example`:
 
 - DB: `MONGODB_URI`
 - Auth: `JWT_SECRET`, `JWT_REFRESH_SECRET`

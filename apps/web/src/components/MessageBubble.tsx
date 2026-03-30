@@ -1,25 +1,9 @@
 import { Check, Copy, ArrowBendUpLeft as Reply, SmileySticker as SmilePlus } from "@phosphor-icons/react";
 import { useCallback, useState } from "react";
 import { QuickReactionBar } from "./EmojiPicker";
+import type { SocketMessagePayload } from "../types/socket";
 
-interface ReplyTo {
-  msgId: string;
-  author: string;
-  message: string;
-}
-
-export interface MessageData {
-  msgId: string;
-  author: string;
-  authorProfilePicture?: string;
-  message: string;
-  original?: string;
-  time: string;
-  lang: string;
-  translations?: Record<string, string>;
-  replyTo?: ReplyTo;
-  reactions?: Record<string, unknown>;
-}
+export type MessageData = SocketMessagePayload;
 
 interface MessageBubbleProps {
   msg: MessageData;

@@ -1,22 +1,17 @@
-# Mobile App Workspace
+# mobile
 
-This is the Expo-based React Native workspace for LinguaChat mobile.
+A new Flutter project.
 
-Useful commands from the repository root:
+## Getting Started
 
-```bash
-npm --prefix apps/mobile install
-npm run dev:mobile
-npm run android:mobile
-npm run ios:mobile
-```
+This project is a starting point for a Flutter application.
 
-Environment setup:
+A few resources to get you started if this is your first Flutter project:
 
-```bash
-cp apps/mobile/.env.example apps/mobile/.env
-```
+- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
+- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
+- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
 
-Then update the backend URLs to point at your API and Socket.IO server.
-
-The mobile app shares contracts from `packages/shared` and is intended to talk to the existing backend in `apps/api`.
+For help getting started with Flutter development, view the
+[online documentation](https://docs.flutter.dev/), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.
